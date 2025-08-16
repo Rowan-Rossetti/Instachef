@@ -1,0 +1,35 @@
+<app-header></app-header>
+
+<div class="liked-recipes-container">
+  <h2>Recettes Likées</h2>
+
+  <div class="recipes-list" *ngIf="recipes().length > 0; else noLiked">
+    <mat-card class="recipe-card" *ngFor="let recipe of recipes()">
+
+      <img
+        mat-card-image
+        *ngIf="recipe.image"
+        [src]="recipe.image"
+        [alt]="recipe.title || 'Image de la recette'"
+      />
+
+      <mat-card-header>
+        <mat-card-title>{{ recipe.title || 'Titre non défini' }}</mat-card-title>
+        <mat-card-subtitle>{{ recipe.category || 'Catégorie inconnue' }}</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-actions align="end">
+        <button mat-raised-button color="warn" (click)="removeLike(recipe.id)">
+          Retirer le like
+        </button>
+      </mat-card-actions>
+
+    </mat-card>
+  </div>
+
+  <ng-template #noLiked>
+    <p>Aucune recette likée pour le moment.</p>
+  </ng-template>
+</div>
+
+<app-footer></app-footer>

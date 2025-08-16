@@ -1,0 +1,53 @@
+<app-header></app-header>
+
+<h1 class="meal-title">Planificateur de repas</h1>
+
+<div class="meal-planner-container">
+  <div class="actions">
+    <button mat-raised-button color="primary" (click)="printPlanner()" aria-label="Imprimer le planificateur">
+      <mat-icon aria-hidden="true">print</mat-icon>
+      Imprimer
+    </button>
+  </div>
+
+  <div class="day-cards">
+    <div class="day-card" *ngFor="let day of days">
+      <h2 class="day-title">{{ day }}</h2>
+
+      <div class="meal-block" *ngFor="let time of times">
+        <h3 class="time-label">{{ time }}</h3>
+
+        <div class="meal-row">
+          <mat-form-field appearance="fill" class="meal-field">
+            <mat-label>Entrée</mat-label>
+            <mat-select [(ngModel)]="meals[day][time].entree">
+              <mat-option *ngFor="let recipe of createdRecipes" [value]="recipe.title">
+                {{ recipe.title }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" class="meal-field">
+            <mat-label>Plat</mat-label>
+            <mat-select [(ngModel)]="meals[day][time].plat">
+              <mat-option *ngFor="let recipe of createdRecipes" [value]="recipe.title">
+                {{ recipe.title }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" class="meal-field">
+            <mat-label>Dessert</mat-label>
+            <mat-select [(ngModel)]="meals[day][time].dessert">
+              <mat-option *ngFor="let recipe of createdRecipes" [value]="recipe.title">
+                {{ recipe.title }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<app-footer></app-footer>

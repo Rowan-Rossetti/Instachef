@@ -1,0 +1,21 @@
+<mat-toolbar class="header-toolbar" color="primary">
+  <a class="app-title" routerLink="/home" aria-label="Accueil Instachef">
+    Instachef
+  </a>
+
+  <div class="spacer"></div>
+
+  <div class="desktop-menu">
+    <a mat-button routerLink="/profile">Profil</a>
+    <a mat-button routerLink="/meal-planner">Planificateur</a>
+    <a mat-button routerLink="/liked-recipe">Recettes aimées</a>
+    <button
+      mat-icon-button
+      matTooltip="Se déconnecter"
+      aria-label="Se déconnecter"
+      (click)="logout()"
+    >
+      <mat-icon>logout</mat-icon>
+    </button>
+  </div>
+</mat-toolbar>

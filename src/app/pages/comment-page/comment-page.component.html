@@ -1,0 +1,23 @@
+<div class="comment-section">
+  <h2>Commentaires</h2>
+
+  <mat-card *ngFor="let comment of comments; let i = index" class="comment-card">
+    <mat-card-content>
+      {{ comment.content }}
+    </mat-card-content>
+    <mat-card-subtitle>
+      {{ comment.date }}
+      <button mat-icon-button color="warn" (click)="deleteComment(i)">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </mat-card-subtitle>
+  </mat-card>
+
+  <form (ngSubmit)="postComment()">
+    <mat-form-field appearance="fill" class="comment-field">
+      <mat-label>Ajouter un commentaire</mat-label>
+      <textarea matInput [(ngModel)]="newComment" name="commentText" required></textarea>
+    </mat-form-field>
+    <button mat-raised-button color="primary" type="submit">Envoyer</button>
+  </form>
+</div>

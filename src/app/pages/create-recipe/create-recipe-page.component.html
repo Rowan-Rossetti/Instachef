@@ -1,0 +1,169 @@
+<app-header></app-header>
+
+<section class="create-recipe-content">
+  <h2 class="title">
+    {{
+      isCreateMode() ? 'Créer une recette' :
+      isEditMode() ? 'Modifier la recette' :
+      'Détails de la recette'
+    }}
+  </h2>
+
+  <form [formGroup]="recipeForm" (ngSubmit)="onSubmit()">
+    <!-- Image principale -->
+    <div class="image-section centered-image-container">
+      <img *ngIf="recipeImage" [src]="recipeImage" alt="Image de la recette" class="main-image centered-image" />
+      <input
+        *ngIf="!isViewMode()"
+        type="file"
+        accept="image/*"
+        (change)="onImageSelected($event)"
+      />
+    </div>
+
+    <!-- Titre -->
+    <ng-container *ngIf="isViewMode(); else titreForm">
+      <p><strong>Titre :</strong> {{ recipeForm.value.title }}</p>
+    </ng-container>
+    <ng-template #titreForm>
+      <mat-form-field appearance="fill">
+        <mat-label>Titre</mat-label>
+        <input matInput formControlName="title" />
+      </mat-form-field>
+    </ng-template>
+
+    <!-- Description -->
+    <ng-container *ngIf="isViewMode(); else descForm">
+      <p><strong>Description :</strong> {{ recipeForm.value.description }}</p>
+    </ng-container>
+    <ng-template #descForm>
+      <mat-form-field appearance="fill">
+        <mat-label>Description</mat-label>
+        <textarea matInput formControlName="description"></textarea>
+      </mat-form-field>
+    </ng-template>
+
+    <!-- Nombre de personnes -->
+    <ng-container *ngIf="isViewMode(); else servingsForm">
+      <p><strong>Nombre de personnes :</strong> {{ recipeForm.value.servings }}</p>
+    </ng-container>
+    <ng-template #servingsForm>
+      <mat-form-field appearance="fill">
+        <mat-label>Nombre de personnes</mat-label>
+        <input matInput type="number" formControlName="servings" />
+      </mat-form-field>
+    </ng-template>
+
+    <!-- Catégorie -->
+    <ng-container *ngIf="isViewMode(); else categoryForm">
+      <p><strong>Catégorie :</strong> {{ recipeForm.value.category }}</p>
+    </ng-container>
+    <ng-template #categoryForm>
+      <mat-form-field appearance="fill">
+        <mat-label>Catégorie</mat-label>
+        <mat-select formControlName="category">
+          <mat-option value="entrée">Entrée</mat-option>
+          <mat-option value="plat">Plat</mat-option>
+          <mat-option value="dessert">Dessert</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </ng-template>
+
+    <!-- Ingrédients -->
+    <div formArrayName="ingredients" class="section">
+      <h3>Ingrédients</h3>
+      <ul *ngIf="isViewMode(); else ingredientsForm">
+  <li *ngFor="let ingredient of ingredients.controls; let i = index" class="ingredient-item view-mode-ingredient">
+    <img
+      *ngIf="ingredientImages[i]"
+      [src]="ingredientImages[i]"
+      alt="Image ingrédient"
+      class="small-ingredient-img"
+    />
+    <span>
+      {{ ingredient.get('name')?.value }} — {{ ingredient.get('quantity')?.value }} {{ ingredient.get('unit')?.value }}
+    </span>
+  </li>
+</ul>
+
+      <ng-template #ingredientsForm>
+        <div *ngFor="let ingredient of ingredients.controls; let i = index" [formGroupName]="i" class="ingredient-item">
+          <div class="ingredient-image-centered">
+            <img *ngIf="ingredientImages[i]" [src]="ingredientImages[i]" alt="Image ingrédient" class="small-ingredient-img" />
+            <input
+              type="file"
+              accept="image/*"
+              (change)="onIngredientImageSelected($event, i)"
+            />
+          </div>
+          <div class="ingredient-fields-row">
+            <mat-form-field appearance="fill">
+              <mat-label>Nom</mat-label>
+              <input matInput formControlName="name" />
+            </mat-form-field>
+
+            <mat-form-field appearance="fill">
+              <mat-label>Quantité</mat-label>
+              <input matInput type="number" formControlName="quantity" />
+            </mat-form-field>
+
+            <mat-form-field appearance="fill">
+              <mat-label>Unité</mat-label>
+              <mat-select formControlName="unit">
+                <mat-option value="g">g</mat-option>
+                <mat-option value="kg">kg</mat-option>
+                <mat-option value="ml">ml</mat-option>
+                <mat-option value="l">l</mat-option>
+                <mat-option value="pièce">pièce</mat-option>
+                <mat-option value="cuillère">cuillère</mat-option>
+                <mat-option value="tasse">tasse</mat-option>
+                <mat-option value="pincée">pincée</mat-option>
+                <mat-option value="autre">autre</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <button mat-icon-button color="warn" type="button" (click)="removeIngredient(i)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+        <button mat-button color="primary" type="button" (click)="addIngredient()">
+          <mat-icon>add</mat-icon> Ajouter un ingrédient
+        </button>
+      </ng-template>
+    </div>
+
+    <!-- Étapes -->
+    <div formArrayName="steps" class="section">
+      <h3>Étapes</h3>
+      <ol *ngIf="isViewMode(); else stepsForm">
+        <li *ngFor="let step of steps.controls; let i = index">
+          {{ step.value }}
+        </li>
+      </ol>
+
+      <ng-template #stepsForm>
+        <div *ngFor="let step of steps.controls; let i = index" class="step-item">
+          <mat-form-field appearance="fill">
+            <mat-label>Étape {{ i + 1 }}</mat-label>
+            <textarea matInput [formControlName]="i"></textarea>
+          </mat-form-field>
+          <button mat-icon-button color="warn" type="button" (click)="removeStep(i)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+        <button mat-button color="primary" type="button" (click)="addStep()">
+          <mat-icon>add</mat-icon> Ajouter une étape
+        </button>
+      </ng-template>
+    </div>
+
+    <!-- Boutons d'action -->
+    <div class="action-buttons">
+      <button *ngIf="!isViewMode()" mat-raised-button color="accent" type="submit">
+        Enregistrer
+      </button>
+    </div>
+  </form>
+</section>
+
+<app-footer></app-footer>

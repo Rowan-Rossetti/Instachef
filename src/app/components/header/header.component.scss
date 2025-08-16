@@ -1,0 +1,106 @@
+.header-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  padding: 0.5rem 1.5rem;
+  min-height: 64px;
+  background-color: #1565c0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  color: #fff;
+  font-family: 'Segoe UI', 'Roboto', sans-serif;
+  transition: all 0.3s ease-in-out;
+}
+
+.app-title {
+  font-size: 1.8rem;
+  font-weight: bold;
+  text-decoration: none;
+  color: #fff;
+  margin-right: auto;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+.desktop-menu {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+
+  a {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #fff;
+    text-decoration: none;
+    padding: 0.5rem 0.8rem;
+    border-radius: 4px;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      transform: scale(1.05);
+    }
+  }
+
+  button {
+    color: #fff;
+    transition: transform 0.2s ease;
+
+    &:hover {
+      transform: rotate(10deg) scale(1.1);
+      color: #bbdefb; // bleu très clair au survol
+    }
+
+    mat-icon {
+      font-size: 24px;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .header-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1rem;
+  }
+
+  .app-title {
+    margin-bottom: 0.5rem;
+    font-size: 1.6rem;
+    text-align: left;
+  }
+
+  .desktop-menu {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 0.8rem;
+
+    a, button {
+      padding-left: 0;
+      padding-right: 0;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .app-title {
+    font-size: 1.4rem;
+  }
+
+  .desktop-menu {
+    flex-direction: column;
+    align-items: flex-end;
+
+    a, button {
+      width: 100%;
+      text-align: right;
+    }
+  }
+}
