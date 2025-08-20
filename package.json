@@ -8,7 +8,8 @@
     "build:ssr": "ng build && ng run instachef:server",
     "serve:ssr": "node dist/instachef/server/main.js",
     "dev:ssr": "ng run instachef:serve-ssr",
-    "test": "ng test"
+    "test": "ng test",
+    "deploy": "ng build --configuration production --base-href \"https://Rowan-Rossetti.github.io/Instachef/\" && npx angular-cli-ghpages --dir=dist/instachef/browser --branch=gh-pages"
   },
   "private": true,
   "devDependencies": {
