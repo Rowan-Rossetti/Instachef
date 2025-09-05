@@ -1,17 +1,40 @@
-import { Component, OnInit } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { isPlatformBrowser, CommonModule } from '@angular/common';
+import { Component, PLATFORM_ID, inject, signal } from '@angular/core';
+import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
+// Angular Material
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule }      from '@angular/material/input';
+import { MatSelectModule }     from '@angular/material/select';
+import { MatButtonModule }     from '@angular/material/button';
+import { MatIconModule }       from '@angular/material/icon';
+
+// ⤵️ Ajuste ces chemins selon ta structure
 import { HeaderComponent } from '../../components/header/header.component';
 import { FooterComponent } from '../../components/footer/footer.component';
+
+type Category = 'entrée' | 'plat' | 'dessert' | '';
+
+interface IngredientForm {
+  name: string;
+  quantity: number | null;
+  unit: string;
+}
+
+export interface RecipeModel {
+  id: number;
+  title: string;
+  description: string;
+  servings: number;
+  category: Category | string;
+  image?: string | null;           // base64
+  ingredientImages?: (string | null)[]; // base64 par ingrédient
+  ingredients: IngredientForm[];
+  steps: string[];
+}
+
+const LS_RECIPES_KEY = 'recipes';
 
 @Component({
   selector: 'app-create-recipe-page',
@@ -21,179 +44,249 @@ import { FooterComponent } from '../../components/footer/footer.component';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    RouterModule,
+
+    // Material
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
-    MatIconModule,
     MatButtonModule,
-    MatCardModule,
-    MatTooltipModule,
+    MatIconModule,
+
+    // Custom
     HeaderComponent,
-    FooterComponent
-  ]
+    FooterComponent,
+  ],
 })
-export class CreateRecipePageComponent implements OnInit {
-  recipeForm!: FormGroup;
-  recipeImage: string = '';
-  ingredientImages: string[] = [];
-  mode: 'create' | 'edit' | 'view' = 'create';
-  recipeId: string | null = null;
+export class CreateRecipePageComponent {
+  private platformId = inject(PLATFORM_ID);
+  private fb         = inject(FormBuilder);
+  private route      = inject(ActivatedRoute);
+  private router     = inject(Router);
 
-  constructor(
-    private fb: FormBuilder,
-    private route: ActivatedRoute,
-    private router: Router
-  ) {}
+  // États d’UI / navigation
+  mode = signal<'create' | 'edit' | 'view'>('create');
+  currentId: number | null = null;
 
-  ngOnInit(): void {
-    // Initialiser le formulaire
-    this.recipeForm = this.fb.group({
-      title: ['', Validators.required],
-      description: [''],
-      servings: [1, Validators.required],
-      category: [''],
-      ingredients: this.fb.array([]),
-      steps: this.fb.array([])
-    });
+  // Images (base64)
+  recipeImage: string | null = null;
+  ingredientImages: (string | null)[] = [];
 
-    // Lire les query params
-    this.route.queryParams.subscribe(params => {
-      this.mode = params['mode'] || 'create';
-      this.recipeId = params['id'] || null;
+  // Formulaire principal
+  recipeForm: FormGroup = this.fb.group({
+    title:       ['', [Validators.required, Validators.minLength(2)]],
+    description: [''],
+    servings:    [1,  [Validators.required, Validators.min(1)]],
+    category:    [''  as Category, Validators.required],
+    ingredients: this.fb.array([]),
+    steps:       this.fb.array([]),
+  });
 
-      if ((this.mode === 'edit' || this.mode === 'view') && this.recipeId) {
-        this.loadRecipe(this.recipeId);
+  /* --------------------------------- Lifecycle --------------------------------- */
+  constructor() {
+    // Lire les query params pour déterminer le mode + id
+    this.route.queryParamMap.subscribe((params) => {
+      const mode = (params.get('mode') as 'create' | 'edit' | 'view' | null) ?? 'create';
+      const id   = params.get('id');
+
+      this.mode.set(mode);
+      this.currentId = id ? Number(id) : null;
+
+      if (this.isEditMode() || this.isViewMode()) {
+        this.loadRecipeForEditOrView(this.currentId);
       } else {
-        // Ajouter un ingrédient et une étape par défaut
-        this.addIngredient();
-        this.addStep();
+        // Créer un “squelette” propre
+        if (this.ingredients.length === 0) this.addIngredient();
+        if (this.steps.length === 0) this.addStep();
       }
+
+      this.updateFormEnablement();
     });
   }
 
-  get ingredients(): FormArray {
-    return this.recipeForm.get('ingredients') as FormArray;
+  /* --------------------------------- Getters ----------------------------------- */
+  get ingredients(): FormArray<FormGroup> {
+    return this.recipeForm.get('ingredients') as FormArray<FormGroup>;
   }
 
-  get steps(): FormArray {
-    return this.recipeForm.get('steps') as FormArray;
+  get steps(): FormArray<FormControl<string>> {
+    return this.recipeForm.get('steps') as FormArray<FormControl<string>>;
   }
 
-  isCreateMode(): boolean {
-    return this.mode === 'create';
+  /* ------------------------------ Mode helpers --------------------------------- */
+  isCreateMode(): boolean { return this.mode() === 'create'; }
+  isEditMode(): boolean   { return this.mode() === 'edit'; }
+  isViewMode(): boolean   { return this.mode() === 'view'; }
+
+  private updateFormEnablement(): void {
+    if (this.isViewMode()) {
+      this.recipeForm.disable({ emitEvent: false });
+    } else {
+      this.recipeForm.enable({ emitEvent: false });
+    }
   }
 
-  isEditMode(): boolean {
-    return this.mode === 'edit';
+  /* ------------------------------- LocalStorage -------------------------------- */
+  private get isBrowser(): boolean {
+    return isPlatformBrowser(this.platformId);
   }
 
-  isViewMode(): boolean {
-    return this.mode === 'view';
+  private readRecipes(): RecipeModel[] {
+    if (!this.isBrowser) return [];
+    try {
+      const raw = localStorage.getItem(LS_RECIPES_KEY);
+      return raw ? (JSON.parse(raw) as RecipeModel[]) : [];
+    } catch { return []; }
+  }
+
+  private writeRecipes(recipes: RecipeModel[]): void {
+    if (!this.isBrowser) return;
+    try {
+      localStorage.setItem(LS_RECIPES_KEY, JSON.stringify(recipes));
+    } catch { /* noop */ }
+  }
+
+  /* ---------------------------------- Load ------------------------------------- */
+  private loadRecipeForEditOrView(id: number | null): void {
+    if (id == null) return;
+    const all = this.readRecipes();
+    const found = all.find(r => r.id === id);
+    if (!found) return;
+
+    // Patch form
+    this.recipeForm.patchValue({
+      title:       found.title ?? '',
+      description: found.description ?? '',
+      servings:    typeof found.servings === 'number' && found.servings > 0 ? found.servings : 1,
+      category:    (found.category as Category) ?? '',
+    });
+
+    // Image principale
+    this.recipeImage = found.image ?? null;
+
+    // Ingrédients + images
+    this.ingredients.clear();
+    this.ingredientImages = [];
+    (found.ingredients ?? []).forEach((ing, i) => {
+      this.ingredients.push(this.fb.group({
+        name:     [ing?.name ?? '', Validators.required],
+        quantity: [typeof ing?.quantity === 'number' ? ing.quantity : null],
+        unit:     [ing?.unit ?? ''],
+      }));
+      this.ingredientImages[i] = found.ingredientImages?.[i] ?? null;
+    });
+
+    // Étapes
+    this.steps.clear();
+    (found.steps ?? []).forEach(step => this.steps.push(new FormControl(step ?? '', { nonNullable: true })));
+
+    if (this.ingredients.length === 0) this.addIngredient();
+    if (this.steps.length === 0) this.addStep();
+  }
+
+  /* --------------------------------- Actions ----------------------------------- */
+  async onSubmit(): Promise<void> {
+    if (this.isViewMode()) return;
+
+    if (this.recipeForm.invalid) {
+      this.recipeForm.markAllAsTouched();
+      return;
+    }
+
+    const formValue = this.recipeForm.getRawValue();
+
+    const toSave: RecipeModel = {
+      id: this.isCreateMode() ? this.generateId() : (this.currentId ?? this.generateId()),
+      title:       formValue.title,
+      description: formValue.description,
+      servings:    formValue.servings,
+      category:    formValue.category,
+      image:       this.recipeImage,
+      ingredientImages: this.ingredientImages.map(v => v ?? null),
+      ingredients: formValue.ingredients as IngredientForm[],
+      steps:       (formValue.steps as string[]).map(s => s ?? ''),
+    };
+
+    const all = this.readRecipes();
+
+    if (this.isCreateMode()) {
+      all.push(toSave);
+    } else {
+      const idx = all.findIndex(r => r.id === toSave.id);
+      if (idx >= 0) all[idx] = toSave; else all.push(toSave);
+    }
+
+    this.writeRecipes(all);
+
+    // Redirection vers la page d’accueil (ajuste la route au besoin)
+    this.router.navigate(['/home']);
   }
 
   addIngredient(): void {
     this.ingredients.push(
       this.fb.group({
-        name: [''],
-        quantity: [''],
-        unit: ['']
+        name:     ['', Validators.required],
+        quantity: [null],
+        unit:     [''],
       })
     );
-    this.ingredientImages.push('');
+    this.ingredientImages.push(null);
   }
 
   removeIngredient(index: number): void {
+    if (index < 0 || index >= this.ingredients.length) return;
     this.ingredients.removeAt(index);
     this.ingredientImages.splice(index, 1);
   }
 
   addStep(): void {
-    this.steps.push(this.fb.control(''));
+    this.steps.push(new FormControl('', { nonNullable: true }));
   }
 
   removeStep(index: number): void {
+    if (index < 0 || index >= this.steps.length) return;
     this.steps.removeAt(index);
   }
 
-  onImageSelected(event: Event): void {
-    const file = (event.target as HTMLInputElement)?.files?.[0];
-    if (file) {
+  /* --------------------------------- Images ------------------------------------ */
+  async onImageSelected(event: Event): Promise<void> {
+    if (this.isViewMode()) return;
+    const file = this.extractFirstFile(event);
+    if (!file) return;
+    this.recipeImage = await this.fileToBase64(file);
+  }
+
+  async onIngredientImageSelected(event: Event, index: number): Promise<void> {
+    if (this.isViewMode()) return;
+    const file = this.extractFirstFile(event);
+    if (!file) return;
+    const base64 = await this.fileToBase64(file);
+    this.ensureIngredientImageIndex(index);
+    this.ingredientImages[index] = base64;
+  }
+
+  /* ------------------------------- Utils fichiers ------------------------------ */
+  private extractFirstFile(event: Event): File | null {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0] ?? null;
+    return file ?? null;
+  }
+
+  private fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => this.recipeImage = reader.result as string;
+      reader.onerror = () => reject(new Error('Erreur de lecture du fichier'));
+      reader.onload = () => resolve(String(reader.result));
       reader.readAsDataURL(file);
-    }
+    });
   }
 
-  onIngredientImageSelected(event: Event, index: number): void {
-    const file = (event.target as HTMLInputElement)?.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => this.ingredientImages[index] = reader.result as string;
-      reader.readAsDataURL(file);
-    }
+  private ensureIngredientImageIndex(index: number): void {
+    while (this.ingredientImages.length <= index) this.ingredientImages.push(null);
   }
 
-  loadRecipe(id: string): void {
-    const recipes = JSON.parse(localStorage.getItem('recipes') || '[]');
-    const recipe = recipes.find((r: any) => r.id === id);
-    if (!recipe) return;
-
-    this.recipeForm.patchValue(recipe);
-    this.recipeImage = recipe.image || '';
-
-    // Reconstituer les ingrédients
-    const ingArray = this.fb.array(
-      recipe.ingredients.map((ing: any) =>
-        this.fb.group({
-          name: [ing.name],
-          quantity: [ing.quantity],
-          unit: [ing.unit]
-        })
-      )
-    );
-    this.recipeForm.setControl('ingredients', ingArray);
-    this.ingredientImages = recipe.ingredients.map((ing: any) => ing.image || '');
-
-    // Reconstituer les étapes
-    const stepArray = this.fb.array(
-      recipe.steps.map((step: string) => this.fb.control(step))
-    );
-    this.recipeForm.setControl('steps', stepArray);
-  }
-
-  onSubmit(): void {
-    if (this.recipeForm.invalid) return;
-
-    const formValue = this.recipeForm.value;
-    const recipes = JSON.parse(localStorage.getItem('recipes') || '[]');
-
-    const enrichedIngredients = formValue.ingredients.map((i: any, idx: number) => ({
-      ...i,
-      image: this.ingredientImages[idx] || ''
-    }));
-
-    if (this.isEditMode() && this.recipeId) {
-      const index = recipes.findIndex((r: any) => r.id === this.recipeId);
-      if (index !== -1) {
-        recipes[index] = {
-          ...formValue,
-          id: this.recipeId,
-          image: this.recipeImage,
-          ingredients: enrichedIngredients
-        };
-      }
-    } else {
-      const newRecipe = {
-        ...formValue,
-        id: Date.now().toString(),
-        image: this.recipeImage,
-        ingredients: enrichedIngredients,
-        likes: 0
-      };
-      recipes.push(newRecipe);
-    }
-
-    localStorage.setItem('recipes', JSON.stringify(recipes));
-    this.router.navigate(['/home']);
+  private generateId(): number {
+    // Simple générateur basé sur le temps + aléatoire pour limiter les collisions locales
+    return Date.now() + Math.floor(Math.random() * 1_000);
   }
 }
