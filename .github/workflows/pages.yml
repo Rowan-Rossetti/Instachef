@@ -1,7 +1,7 @@
 name: Deploy Instachef to GitHub Pages
 on:
-  push:
-    branches: [main]
+  push: { branches: [main] }
+  workflow_dispatch: {}
 permissions:
   contents: read
   pages: write
@@ -15,13 +15,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
+        with: { node-version: 20, cache: npm }
       - run: npm ci
-      - run: npm run build -- --configuration production --base-href "/Instachef/"
-      - name: Upload artifact (Angular dist)
-        uses: actions/upload-pages-artifact@v3
+      - run: npx ng build --configuration production --base-href "/Instachef/"
+      # Fallback SPA pour GitHub Pages
+      - name: Add 404 fallback
+        run: |
+          BDIR=$(ls -d dist/*/browser 2>/dev/null || ls -d dist/* 2>/dev/null | head -n1)
+          [ -f "$BDIR/index.html" ] && cp "$BDIR/index.html" "$BDIR/404.html" || true
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: |
             dist/**/browser
