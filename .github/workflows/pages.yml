@@ -26,13 +26,11 @@ jobs:
           cache: 'npm'
 
       - run: npm ci
-      # IMPORTANT: base-href = /<nom-du-repo>/   -> ici /Instachef/
       - run: npm run build -- --configuration production --base-href "/Instachef/"
 
       - name: Upload artifact (Angular dist)
         uses: actions/upload-pages-artifact@v3
         with:
-          # Angular 15+ -> dist/<app>/browser
           path: dist/**/browser
 
   deploy:
