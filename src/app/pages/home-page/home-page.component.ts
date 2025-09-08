@@ -47,7 +47,6 @@ const LS_LIKES_KEY   = 'likedRecipes';
     MatCardModule,
     MatTooltipModule,
 
-    // Custom components (ajuste les chemins si besoin)
     HeaderComponent,
     FooterComponent,
     CommentPageComponent,
@@ -59,15 +58,12 @@ export class HomePageComponent {
   private platformId = inject(PLATFORM_ID);
   private router = inject(Router);
 
-  // UI state (liés à ton template)
   searchQuery = '';
   selectedCategory: Category | string = '';
 
-  // Données
   recipes: Recipe[] = [];
   private likedIds = new Set<number>();
 
-  // Affichage des commentaires par recette
   showCommentForId = new Set<number>();
 
   constructor() {
@@ -75,7 +71,6 @@ export class HomePageComponent {
     this.loadLikesFromStorage();
   }
 
-  /* ----------------------- Helpers LocalStorage (SSR safe) ----------------------- */
   private get isBrowser(): boolean {
     return isPlatformBrowser(this.platformId);
   }
@@ -95,7 +90,7 @@ export class HomePageComponent {
     try {
       localStorage.setItem(key, JSON.stringify(value));
     } catch {
-      // noop
+      
     }
   }
 

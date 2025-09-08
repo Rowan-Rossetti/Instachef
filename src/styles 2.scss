@@ -1,0 +1,27 @@
+// Variables globales
+$primary-color: #c62828;
+$secondary-color: #f8bbd0;
+$font-stack: 'Segoe UI', sans-serif;
+
+// Reset de base
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+// Styles globaux
+body {
+  font-family: $font-stack;
+  background-color: #fefefe;
+  color: #333;
+}
+
+a {
+  color: $primary-color;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

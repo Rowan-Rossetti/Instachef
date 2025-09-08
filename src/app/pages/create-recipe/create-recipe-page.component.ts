@@ -27,8 +27,8 @@ export interface RecipeModel {
   description: string;
   servings: number;
   category: Category | string;
-  image?: string | null;           // base64
-  ingredientImages?: (string | null)[]; // base64 par ingrédient
+  image?: string | null;
+  ingredientImages?: (string | null)[];
   ingredients: IngredientForm[];
   steps: string[];
 }
@@ -72,9 +72,9 @@ export class CreateRecipePageComponent {
 
   // Formulaire principal
   recipeForm: FormGroup = this.fb.group({
-    title:       ['', [Validators.required, Validators.minLength(2)]],
-    description: [''],
-    servings:    [1,  [Validators.required, Validators.min(1)]],
+    title:       ['', [Validators.required, Validators.minLength(5)]],
+    description: ['', [Validators.required, Validators.minLength(5)]], 
+    servings:    [1,  [Validators.required, Validators.min(1), Validators.minLength(5)]],
     category:    [''  as Category, Validators.required],
     ingredients: this.fb.array([]),
     steps:       this.fb.array([]),
@@ -284,7 +284,6 @@ export class CreateRecipePageComponent {
   }
 
   private generateId(): number {
-    // Simple générateur basé sur le temps + aléatoire pour limiter les collisions locales
     return Date.now() + Math.floor(Math.random() * 1_000);
   }
 }

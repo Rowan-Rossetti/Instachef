@@ -1,9 +1,13 @@
-import { Component, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, signal, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser, CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { HeaderComponent } from '../../components/header/header.component';
 import { FooterComponent } from '../../components/footer/footer.component';
+
+const LS_RECIPES_KEY = 'recipes';
+const LS_LIKES_KEY   = 'likedRecipes';     // même clé que sur HomePage
+const LS_OLD_LIKES   = 'likedRecipeIds';   // fallback pour anciennes données
 
 @Component({
   selector: 'app-liked-recipes',
@@ -13,27 +17,59 @@ import { FooterComponent } from '../../components/footer/footer.component';
   styleUrls: ['./liked-recipes.component.scss']
 })
 export class LikedRecipesComponent {
-  recipes = signal(this.getLikedRecipes());
+  private platformId = inject(PLATFORM_ID);
+  recipes = signal<any[]>(this.getLikedRecipes()); // recettes filtrées (likées)
 
-  getLikedRecipeIds(): Set<number> {
-    const data = localStorage.getItem('likedRecipeIds');
-    return data ? new Set(JSON.parse(data)) : new Set<number>();
+  private get isBrowser(): boolean {
+    return isPlatformBrowser(this.platformId);
   }
 
-  getAllRecipes(): any[] {
-    const data = localStorage.getItem('recipes');
-    return data ? JSON.parse(data) : [];
+  // Lit un tableau d'IDs likés depuis localStorage
+  private readLikedIds(): Set<number> {
+    if (!this.isBrowser) return new Set<number>();
+
+    // Clé officielle
+    const main = localStorage.getItem(LS_LIKES_KEY);
+    if (main) {
+      try { return new Set<number>(JSON.parse(main)); } catch { /* noop */ }
+    }
+
+    // Fallback si des données plus anciennes existent
+    const legacy = localStorage.getItem(LS_OLD_LIKES);
+    if (legacy) {
+      try { return new Set<number>(JSON.parse(legacy)); } catch { /* noop */ }
+    }
+
+    return new Set<number>();
   }
 
-  getLikedRecipes(): any[] {
-    const likedIds = this.getLikedRecipeIds();
-    return this.getAllRecipes().filter(recipe => likedIds.has(recipe.id));
+  // Écrit les IDs likés (clé officielle)
+  private writeLikedIds(ids: Set<number>): void {
+    if (!this.isBrowser) return;
+    localStorage.setItem(LS_LIKES_KEY, JSON.stringify([...ids]));
   }
 
+  // Toutes les recettes (depuis localStorage)
+  private getAllRecipes(): any[] {
+    if (!this.isBrowser) return [];
+    const data = localStorage.getItem(LS_RECIPES_KEY);
+    try { return data ? JSON.parse(data) : []; } catch { return []; }
+  }
+
+  // Recettes likées = recettes dont l'id est dans likedIds
+  private getLikedRecipes(): any[] {
+    const likedIds = this.readLikedIds();
+    return this.getAllRecipes().filter(r => r && typeof r.id === 'number' && likedIds.has(r.id));
+  }
+
+  // Supprime un like et rafraîchit la liste
   removeLike(id: number): void {
-    const likedIds = this.getLikedRecipeIds();
+    const likedIds = this.readLikedIds();
     likedIds.delete(id);
-    localStorage.setItem('likedRecipeIds', JSON.stringify([...likedIds]));
+    this.writeLikedIds(likedIds);
     this.recipes.set(this.getLikedRecipes());
   }
+
+  // Utile pour *ngFor trackBy
+  trackById = (_: number, r: any) => r?.id;
 }
