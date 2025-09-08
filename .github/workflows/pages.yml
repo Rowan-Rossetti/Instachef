@@ -1,19 +1,14 @@
-name: Deploy Angular to GitHub Pages
-
+name: Deploy Instachef to GitHub Pages
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:
-
+    branches: [main]
 permissions:
   contents: read
   pages: write
   id-token: write
-
 concurrency:
   group: "pages"
   cancel-in-progress: true
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -24,17 +19,13 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - name: Build Angular
-        run: npx ng build --configuration production --base-href "/Instachef/"
-      - name: SPA 404 fallback
-        run: |
-          APP_DIR=$(ls -1 dist | head -n1)
-          cp "dist/$APP_DIR/browser/index.html" "dist/$APP_DIR/browser/404.html"
-      - name: Upload artifact
+      - run: npm run build -- --configuration production --base-href "/Instachef/"
+      - name: Upload artifact (Angular dist)
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist/*/browser
-
+          path: |
+            dist/**/browser
+            dist/*
   deploy:
     needs: build
     runs-on: ubuntu-latest
@@ -42,6 +33,5 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
+      - id: deployment
         uses: actions/deploy-pages@v4
