@@ -5,12 +5,11 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 // Angular Material
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule }      from '@angular/material/input';
-import { MatSelectModule }     from '@angular/material/select';
-import { MatButtonModule }     from '@angular/material/button';
-import { MatIconModule }       from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 
-// ⤵️ Ajuste ces chemins selon ta structure
 import { HeaderComponent } from '../../components/header/header.component';
 import { FooterComponent } from '../../components/footer/footer.component';
 
@@ -64,11 +63,10 @@ export class CreateRecipePageComponent {
   private route      = inject(ActivatedRoute);
   private router     = inject(Router);
 
-  // États d’UI / navigation
   mode = signal<'create' | 'edit' | 'view'>('create');
   currentId: number | null = null;
 
-  // Images (base64)
+  // Images
   recipeImage: string | null = null;
   ingredientImages: (string | null)[] = [];
 
