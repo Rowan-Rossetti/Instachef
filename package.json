@@ -27,7 +27,8 @@
     "@types/node": "^22.15.17",
     "angular-cli-ghpages": "^2.0.3",
     "sass": "^1.89.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vite": "^6.3.6"
   },
   "dependencies": {
     "@angular/animations": "^19.2.14",
