@@ -1,21 +1,21 @@
-import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 
+/* Angular Material */
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 
+/* Tes composants */
 import { HeaderComponent } from '../../components/header/header.component';
 import { FooterComponent } from '../../components/footer/footer.component';
 
 @Component({
   selector: 'app-profile-page',
   standalone: true,
-  templateUrl: './profile-page.component.html',
-  styleUrls: ['./profile-page.component.scss'],
   imports: [
     CommonModule,
     ReactiveFormsModule,
@@ -25,47 +25,53 @@ import { FooterComponent } from '../../components/footer/footer.component';
     MatIconModule,
     HeaderComponent,
     FooterComponent
-  ]
+  ],
+  templateUrl: './profile-page.component.html',
+  styleUrls: ['./profile-page.component.scss']
 })
-export class ProfilePageComponent {
-  profileForm: FormGroup;
+export class ProfilePageComponent implements OnInit {
+
+  profileForm!: FormGroup;
+
   hideCurrentPassword = true;
   hideNewPassword = true;
 
-  constructor(private fb: FormBuilder, private router: Router) {
+  constructor(
+    private fb: FormBuilder,
+    private router: Router
+  ) {}
+
+  ngOnInit(): void {
+    const storedUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+
     this.profileForm = this.fb.group({
-      firstname: [''],
-      lastname: [''],
-      email: [''],
-      password: [''],
+      firstname: [storedUser.firstname || ''],
+      lastname: [storedUser.lastname || ''],
+      email: [storedUser.email || ''],
+      password: [storedUser.password || ''],
       newPassword: ['']
     });
-
-    this.loadUserData();
   }
 
-  loadUserData() {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    if (user) {
-      this.profileForm.patchValue({
-        firstname: user.firstname || '',
-        lastname: user.lastname || '',
-        email: user.email || ''
-      });
-    }
-  }
+  saveChanges(): void {
 
-  saveChanges() {
+    const formValue = this.profileForm.value;
+
     const updatedUser = {
-      ...JSON.parse(localStorage.getItem('user') || '{}'),
-      ...this.profileForm.value
+      ...JSON.parse(localStorage.getItem('currentUser') || '{}'),
+      firstname: formValue.firstname,
+      lastname: formValue.lastname,
+      email: formValue.email,
+      password: formValue.newPassword
+        ? formValue.newPassword
+        : formValue.password
     };
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-    alert('Modifications enregistrées.');
+
+    localStorage.setItem('currentUser', JSON.stringify(updatedUser));
   }
 
-  logout() {
-    localStorage.removeItem('user');
-    this.router.navigate(['/auth-page']);
+  logout(): void {
+    localStorage.removeItem('currentUser');
+    this.router.navigate(['/auth']);
   }
 }
