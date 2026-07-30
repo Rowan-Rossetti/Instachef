@@ -2,6 +2,8 @@ import { Component, inject, signal, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser, CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { Router, RouterModule } from '@angular/router';
 import { HeaderComponent } from '../../components/header/header.component';
 import { FooterComponent } from '../../components/footer/footer.component';
 
@@ -12,12 +14,13 @@ const LS_OLD_LIKES   = 'likedRecipeIds';   // fallback pour anciennes données
 @Component({
   selector: 'app-liked-recipes',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatButtonModule, HeaderComponent, FooterComponent],
+  imports: [CommonModule, RouterModule, MatCardModule, MatButtonModule, MatIconModule, HeaderComponent, FooterComponent],
   templateUrl: './liked-recipes.component.html',
   styleUrls: ['./liked-recipes.component.scss']
 })
 export class LikedRecipesComponent {
   private platformId = inject(PLATFORM_ID);
+  private router = inject(Router);
   recipes = signal<any[]>(this.getLikedRecipes()); // recettes filtrées (likées)
 
   private get isBrowser(): boolean {
@@ -63,11 +66,16 @@ export class LikedRecipesComponent {
   }
 
   // Supprime un like et rafraîchit la liste
-  removeLike(id: number): void {
+  removeLike(id: number, event?: Event): void {
+    event?.stopPropagation();
     const likedIds = this.readLikedIds();
     likedIds.delete(id);
     this.writeLikedIds(likedIds);
     this.recipes.set(this.getLikedRecipes());
+  }
+
+  viewRecipe(id: number): void {
+    this.router.navigate(['/create-recipe'], { queryParams: { id, mode: 'view' } });
   }
 
   // Utile pour *ngFor trackBy

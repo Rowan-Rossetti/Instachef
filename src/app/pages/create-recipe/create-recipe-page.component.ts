@@ -11,7 +11,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 
 import { HeaderComponent } from '../../components/header/header.component';
+import { BrowserStorageService } from '../../core/services/browser-storage.service';
 import { FooterComponent } from '../../components/footer/footer.component';
+import { CommentPageComponent } from '../comment-page/comment-page.component';
 
 type Category = 'entrée' | 'plat' | 'dessert' | '';
 
@@ -26,6 +28,8 @@ export interface RecipeModel {
   title: string;
   description: string;
   servings: number;
+  prepTime?: number;
+  difficulty?: 'facile' | 'intermédiaire' | 'avancé' | '';
   category: Category | string;
   image?: string | null;
   ingredientImages?: (string | null)[];
@@ -55,6 +59,7 @@ const LS_RECIPES_KEY = 'recipes';
     // Custom
     HeaderComponent,
     FooterComponent,
+    CommentPageComponent,
   ],
 })
 export class CreateRecipePageComponent {
@@ -62,6 +67,7 @@ export class CreateRecipePageComponent {
   private fb         = inject(FormBuilder);
   private route      = inject(ActivatedRoute);
   private router     = inject(Router);
+  private storage    = inject(BrowserStorageService);
 
   mode = signal<'create' | 'edit' | 'view'>('create');
   currentId: number | null = null;
@@ -69,12 +75,16 @@ export class CreateRecipePageComponent {
   // Images
   recipeImage: string | null = null;
   ingredientImages: (string | null)[] = [];
+  feedbackMessage = '';
+  fileError = '';
 
   // Formulaire principal
   recipeForm: FormGroup = this.fb.group({
     title:       ['', [Validators.required, Validators.minLength(5)]],
     description: ['', [Validators.required, Validators.minLength(5)]], 
-    servings:    [1,  [Validators.required, Validators.min(1), Validators.minLength(5)]],
+    servings:    [1,  [Validators.required, Validators.min(1), Validators.max(50)]],
+    prepTime:    [30, [Validators.required, Validators.min(1), Validators.max(1440)]],
+    difficulty:  ['facile'],
     category:    [''  as Category, Validators.required],
     ingredients: this.fb.array([]),
     steps:       this.fb.array([]),
@@ -116,6 +126,34 @@ export class CreateRecipePageComponent {
   isEditMode(): boolean   { return this.mode() === 'edit'; }
   isViewMode(): boolean   { return this.mode() === 'view'; }
 
+  get pageTitle(): string {
+    if (this.isEditMode()) return 'Peaufinez votre recette';
+    if (this.isViewMode()) return 'Découvrez la recette';
+    return 'Créez une nouvelle recette';
+  }
+
+  get pageSubtitle(): string {
+    if (this.isEditMode()) return 'Ajustez les détails, les ingrédients et les étapes avant de republier.';
+    if (this.isViewMode()) return 'Tous les détails nécessaires pour réussir ce plat.';
+    return 'Transformez votre idée en une fiche claire, gourmande et facile à suivre.';
+  }
+
+  get completionPercentage(): number {
+    const value = this.recipeForm.getRawValue();
+    const checks = [
+      !!value.title?.trim(),
+      !!value.description?.trim(),
+      Number(value.servings) > 0,
+      Number(value.prepTime) > 0,
+      !!value.difficulty,
+      !!value.category,
+      this.ingredients.length > 0 && this.ingredients.controls.every(item => !!item.get('name')?.value?.trim()),
+      this.steps.length > 0 && this.steps.controls.every(step => !!step.value?.trim()),
+      !!this.recipeImage
+    ];
+    return Math.round((checks.filter(Boolean).length / checks.length) * 100);
+  }
+
   private updateFormEnablement(): void {
     if (this.isViewMode()) {
       this.recipeForm.disable({ emitEvent: false });
@@ -132,15 +170,14 @@ export class CreateRecipePageComponent {
   private readRecipes(): RecipeModel[] {
     if (!this.isBrowser) return [];
     try {
-      const raw = localStorage.getItem(LS_RECIPES_KEY);
-      return raw ? (JSON.parse(raw) as RecipeModel[]) : [];
+      return this.storage.get<RecipeModel[]>(LS_RECIPES_KEY, []);
     } catch { return []; }
   }
 
   private writeRecipes(recipes: RecipeModel[]): void {
     if (!this.isBrowser) return;
     try {
-      localStorage.setItem(LS_RECIPES_KEY, JSON.stringify(recipes));
+      this.storage.set(LS_RECIPES_KEY, recipes);
     } catch { /* noop */ }
   }
 
@@ -156,6 +193,8 @@ export class CreateRecipePageComponent {
       title:       found.title ?? '',
       description: found.description ?? '',
       servings:    typeof found.servings === 'number' && found.servings > 0 ? found.servings : 1,
+      prepTime:    typeof found.prepTime === 'number' && found.prepTime > 0 ? found.prepTime : 30,
+      difficulty:  found.difficulty ?? 'facile',
       category:    (found.category as Category) ?? '',
     });
 
@@ -198,6 +237,8 @@ export class CreateRecipePageComponent {
       title:       formValue.title,
       description: formValue.description,
       servings:    formValue.servings,
+      prepTime:    formValue.prepTime,
+      difficulty:  formValue.difficulty,
       category:    formValue.category,
       image:       this.recipeImage,
       ingredientImages: this.ingredientImages.map(v => v ?? null),
@@ -215,6 +256,7 @@ export class CreateRecipePageComponent {
     }
 
     this.writeRecipes(all);
+    this.feedbackMessage = this.isEditMode() ? 'Modifications enregistrées.' : 'Recette publiée.';
 
     // Redirection vers la page d’accueil (ajuste la route au besoin)
     this.router.navigate(['/home']);
@@ -232,7 +274,7 @@ export class CreateRecipePageComponent {
   }
 
   removeIngredient(index: number): void {
-    if (index < 0 || index >= this.ingredients.length) return;
+    if (index < 0 || index >= this.ingredients.length || this.ingredients.length === 1) return;
     this.ingredients.removeAt(index);
     this.ingredientImages.splice(index, 1);
   }
@@ -242,7 +284,7 @@ export class CreateRecipePageComponent {
   }
 
   removeStep(index: number): void {
-    if (index < 0 || index >= this.steps.length) return;
+    if (index < 0 || index >= this.steps.length || this.steps.length === 1) return;
     this.steps.removeAt(index);
   }
 
@@ -250,14 +292,14 @@ export class CreateRecipePageComponent {
   async onImageSelected(event: Event): Promise<void> {
     if (this.isViewMode()) return;
     const file = this.extractFirstFile(event);
-    if (!file) return;
+    if (!file || !this.validateImage(file)) return;
     this.recipeImage = await this.fileToBase64(file);
   }
 
   async onIngredientImageSelected(event: Event, index: number): Promise<void> {
     if (this.isViewMode()) return;
     const file = this.extractFirstFile(event);
-    if (!file) return;
+    if (!file || !this.validateImage(file)) return;
     const base64 = await this.fileToBase64(file);
     this.ensureIngredientImageIndex(index);
     this.ingredientImages[index] = base64;
@@ -269,6 +311,23 @@ export class CreateRecipePageComponent {
     const file = input?.files?.[0] ?? null;
     return file ?? null;
   }
+
+  removeRecipeImage(): void { this.recipeImage = null; this.fileError = ''; }
+
+  private validateImage(file: File): boolean {
+    this.fileError = '';
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      this.fileError = 'Format non pris en charge. Utilisez JPG, PNG ou WEBP.';
+      return false;
+    }
+    if (file.size > 3 * 1024 * 1024) {
+      this.fileError = 'L’image dépasse 3 Mo.';
+      return false;
+    }
+    return true;
+  }
+
+  trackByIndex(index: number): number { return index; }
 
   private fileToBase64(file: File): Promise<string> {
     return new Promise((resolve, reject) => {

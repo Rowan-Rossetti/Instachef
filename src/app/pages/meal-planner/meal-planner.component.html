@@ -1,53 +1,141 @@
 <app-header></app-header>
 
-<h1 class="meal-title">Planificateur de repas</h1>
-
-<div class="meal-planner-container">
-  <div class="actions">
-    <button mat-raised-button color="primary" (click)="printPlanner()" aria-label="Imprimer le planificateur">
-      <mat-icon aria-hidden="true">print</mat-icon>
-      Imprimer
-    </button>
-  </div>
-
-  <div class="day-cards">
-    <div class="day-card" *ngFor="let day of days">
-      <h2 class="day-title">{{ day }}</h2>
-
-      <div class="meal-block" *ngFor="let time of times">
-        <h3 class="time-label">{{ time }}</h3>
-
-        <div class="meal-row">
-          <mat-form-field appearance="fill" class="meal-field">
-            <mat-label>Entrée</mat-label>
-            <mat-select [(ngModel)]="meals[day][time].entree">
-              <mat-option *ngFor="let recipe of createdRecipes" [value]="recipe.title">
-                {{ recipe.title }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field appearance="fill" class="meal-field">
-            <mat-label>Plat</mat-label>
-            <mat-select [(ngModel)]="meals[day][time].plat">
-              <mat-option *ngFor="let recipe of createdRecipes" [value]="recipe.title">
-                {{ recipe.title }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field appearance="fill" class="meal-field">
-            <mat-label>Dessert</mat-label>
-            <mat-select [(ngModel)]="meals[day][time].dessert">
-              <mat-option *ngFor="let recipe of createdRecipes" [value]="recipe.title">
-                {{ recipe.title }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-      </div>
+<main class="planner-page page-shell">
+  <section class="planner-hero">
+    <div class="planner-hero__copy">
+      <span class="eyebrow">Organisation hebdomadaire</span>
+      <h1>Planificateur de repas</h1>
+      <p>Composez votre semaine avec vos recettes enregistrées ou saisissez librement chaque idée de repas.</p>
     </div>
-  </div>
-</div>
+
+    <div class="week-switcher" aria-label="Choisir la semaine">
+      <button mat-icon-button type="button" (click)="previousWeek()" aria-label="Afficher la semaine précédente">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+      <button class="week-current" type="button" (click)="currentWeek()" title="Revenir à la semaine actuelle">
+        <strong>{{ weekLabel }}</strong>
+      </button>
+      <button mat-icon-button type="button" (click)="nextWeek()" aria-label="Afficher la semaine suivante">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </div>
+  </section>
+
+  <section class="planner-toolbar" aria-label="Exporter le planificateur">
+    <div class="planner-actions">
+      <button mat-stroked-button type="button" (click)="downloadWord()">
+        <mat-icon>description</mat-icon>
+        Télécharger en Word
+      </button>
+      <button mat-stroked-button type="button" (click)="downloadPdf()">
+        <mat-icon>picture_as_pdf</mat-icon>
+        Télécharger en PDF
+      </button>
+      <button mat-flat-button color="primary" type="button" (click)="printPlanner()">
+        <mat-icon>print</mat-icon>
+        Imprimer
+      </button>
+    </div>
+  </section>
+
+  <p class="autosave-note">
+    <mat-icon>cloud_done</mat-icon>
+    Les modifications sont enregistrées automatiquement sur cet appareil.
+  </p>
+
+  <section class="planner-board" id="meal-planner-export">
+    <header class="export-header">
+      <span>Instachef</span>
+      <div>
+        <h2>Menu de la semaine</h2>
+        <p>{{ weekLabel }}</p>
+      </div>
+    </header>
+
+    <div class="board-heading" aria-hidden="true">
+      <span>Jour</span>
+      <span>Midi</span>
+      <span>Soir</span>
+    </div>
+
+    <article class="day-card" *ngFor="let day of days; let dayIndex = index">
+      <header class="day-card__header">
+        <div class="day-number">{{ (dayIndex + 1).toString().padStart(2, '0') }}</div>
+        <div>
+          <span>Jour</span>
+          <h2>{{ day }}</h2>
+        </div>
+        <div class="day-actions no-export" *ngIf="dayIndex < days.length - 1">
+          <button
+            mat-icon-button
+            type="button"
+            (click)="duplicateDay(day)"
+            [attr.aria-label]="'Copier ' + day + ' vers ' + days[dayIndex + 1]"
+            title="Copier vers le jour suivant"
+          >
+            <mat-icon>content_copy</mat-icon>
+          </button>
+        </div>
+      </header>
+
+      <section class="meal-card" *ngFor="let time of times">
+        <header class="meal-card__title">
+          <mat-icon>{{ time === 'Midi' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+          <span>{{ time }}</span>
+        </header>
+
+        <div class="meal-fields">
+          <label class="meal-field">
+            <span>Entrée</span>
+            <input
+              type="text"
+              [(ngModel)]="meals[day][time].entree"
+              (ngModelChange)="saveMeals()"
+              [attr.list]="'entrees-' + dayIndex + '-' + time"
+              placeholder="Ajouter une entrée"
+              autocomplete="off"
+            >
+            <datalist [id]="'entrees-' + dayIndex + '-' + time">
+              <option *ngFor="let recipe of recipesByCategory('entrée')" [value]="recipe.title"></option>
+            </datalist>
+            <strong class="print-value">{{ meals[day][time].entree || '—' }}</strong>
+          </label>
+
+          <label class="meal-field meal-field--main">
+            <span>Plat</span>
+            <input
+              type="text"
+              [(ngModel)]="meals[day][time].plat"
+              (ngModelChange)="saveMeals()"
+              [attr.list]="'plats-' + dayIndex + '-' + time"
+              placeholder="Ajouter un plat"
+              autocomplete="off"
+            >
+            <datalist [id]="'plats-' + dayIndex + '-' + time">
+              <option *ngFor="let recipe of recipesByCategory('plat')" [value]="recipe.title"></option>
+            </datalist>
+            <strong class="print-value">{{ meals[day][time].plat || '—' }}</strong>
+          </label>
+
+          <label class="meal-field">
+            <span>Dessert</span>
+            <input
+              type="text"
+              [(ngModel)]="meals[day][time].dessert"
+              (ngModelChange)="saveMeals()"
+              [attr.list]="'desserts-' + dayIndex + '-' + time"
+              placeholder="Ajouter un dessert"
+              autocomplete="off"
+            >
+            <datalist [id]="'desserts-' + dayIndex + '-' + time">
+              <option *ngFor="let recipe of recipesByCategory('dessert')" [value]="recipe.title"></option>
+            </datalist>
+            <strong class="print-value">{{ meals[day][time].dessert || '—' }}</strong>
+          </label>
+        </div>
+      </section>
+    </article>
+  </section>
+</main>
 
 <app-footer></app-footer>

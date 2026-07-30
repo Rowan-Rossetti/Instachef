@@ -1,169 +1,260 @@
 <app-header></app-header>
 
-<section class="create-recipe-content">
-  <h2 class="title">
-    {{
-      isCreateMode() ? 'Créer une recette' :
-      isEditMode() ? 'Modifier la recette' :
-      'Détails de la recette'
-    }}
-  </h2>
-
-  <form [formGroup]="recipeForm" (ngSubmit)="onSubmit()">
-    <!-- Image principale -->
-    <div class="image-section centered-image-container">
-      <img *ngIf="recipeImage" [src]="recipeImage" alt="Image de la recette" class="main-image centered-image" />
-      <input
-        *ngIf="!isViewMode()"
-        type="file"
-        accept="image/*"
-        (change)="onImageSelected($event)"
-      />
+<main class="recipe-editor-shell">
+  <section class="editor-hero">
+    <div>
+      <span class="eyebrow">Atelier culinaire</span>
+      <h1>{{ pageTitle }}</h1>
+      <p>{{ pageSubtitle }}</p>
     </div>
+    <a mat-stroked-button routerLink="/home" class="back-button">
+      <mat-icon>arrow_back</mat-icon>
+      Retour aux recettes
+    </a>
+  </section>
 
-    <!-- Titre -->
-    <ng-container *ngIf="isViewMode(); else titreForm">
-      <p><strong>Titre :</strong> {{ recipeForm.value.title }}</p>
-    </ng-container>
-    <ng-template #titreForm>
-      <mat-form-field appearance="fill">
-        <mat-label>Titre</mat-label>
-        <input matInput formControlName="title" />
-      </mat-form-field>
-    </ng-template>
+  <section *ngIf="isViewMode()" class="recipe-view-layout">
+    <article class="recipe-view-card">
+      <div class="recipe-view-image">
+        <img *ngIf="recipeImage; else viewImageFallback" [src]="recipeImage" [alt]="recipeForm.get('title')?.value || 'Photo de la recette'" />
+        <ng-template #viewImageFallback><div class="view-image-fallback"><mat-icon>restaurant_menu</mat-icon></div></ng-template>
+      </div>
 
-    <!-- Description -->
-    <ng-container *ngIf="isViewMode(); else descForm">
-      <p><strong>Description :</strong> {{ recipeForm.value.description }}</p>
-    </ng-container>
-    <ng-template #descForm>
-      <mat-form-field appearance="fill">
-        <mat-label>Description</mat-label>
-        <textarea matInput formControlName="description"></textarea>
-      </mat-form-field>
-    </ng-template>
-
-    <!-- Nombre de personnes -->
-    <ng-container *ngIf="isViewMode(); else servingsForm">
-      <p><strong>Nombre de personnes :</strong> {{ recipeForm.value.servings }}</p>
-    </ng-container>
-    <ng-template #servingsForm>
-      <mat-form-field appearance="fill">
-        <mat-label>Nombre de personnes</mat-label>
-        <input matInput type="number" formControlName="servings" />
-      </mat-form-field>
-    </ng-template>
-
-    <!-- Catégorie -->
-    <ng-container *ngIf="isViewMode(); else categoryForm">
-      <p><strong>Catégorie :</strong> {{ recipeForm.value.category }}</p>
-    </ng-container>
-    <ng-template #categoryForm>
-      <mat-form-field appearance="fill">
-        <mat-label>Catégorie</mat-label>
-        <mat-select formControlName="category">
-          <mat-option value="entrée">Entrée</mat-option>
-          <mat-option value="plat">Plat</mat-option>
-          <mat-option value="dessert">Dessert</mat-option>
-        </mat-select>
-      </mat-form-field>
-    </ng-template>
-
-    <!-- Ingrédients -->
-    <div formArrayName="ingredients" class="section">
-      <h3>Ingrédients</h3>
-      <ul *ngIf="isViewMode(); else ingredientsForm">
-  <li *ngFor="let ingredient of ingredients.controls; let i = index" class="ingredient-item view-mode-ingredient">
-    <img
-      *ngIf="ingredientImages[i]"
-      [src]="ingredientImages[i]"
-      alt="Image ingrédient"
-      class="small-ingredient-img"
-    />
-    <span>
-      {{ ingredient.get('name')?.value }} — {{ ingredient.get('quantity')?.value }} {{ ingredient.get('unit')?.value }}
-    </span>
-  </li>
-</ul>
-
-      <ng-template #ingredientsForm>
-        <div *ngFor="let ingredient of ingredients.controls; let i = index" [formGroupName]="i" class="ingredient-item">
-          <div class="ingredient-image-centered">
-            <img *ngIf="ingredientImages[i]" [src]="ingredientImages[i]" alt="Image ingrédient" class="small-ingredient-img" />
-            <input
-              type="file"
-              accept="image/*"
-              (change)="onIngredientImageSelected($event, i)"
-            />
+      <div class="recipe-view-content">
+        <header class="recipe-view-header">
+          <div>
+            <span class="recipe-category">{{ recipeForm.get('category')?.value || 'Recette' }}</span>
+            <h2>{{ recipeForm.get('title')?.value }}</h2>
+            <p>{{ recipeForm.get('description')?.value }}</p>
           </div>
-          <div class="ingredient-fields-row">
-            <mat-form-field appearance="fill">
-              <mat-label>Nom</mat-label>
-              <input matInput formControlName="name" />
-            </mat-form-field>
+          <a mat-flat-button [routerLink]="['/create-recipe']" [queryParams]="{ id: currentId, mode: 'edit' }">
+            <mat-icon>edit</mat-icon>
+            Modifier
+          </a>
+        </header>
 
-            <mat-form-field appearance="fill">
-              <mat-label>Quantité</mat-label>
-              <input matInput type="number" formControlName="quantity" />
-            </mat-form-field>
+        <ul class="recipe-information" aria-label="Informations de la recette">
+          <li><mat-icon>groups</mat-icon><span>Portions</span><strong>{{ recipeForm.get('servings')?.value }} personnes</strong></li>
+          <li><mat-icon>schedule</mat-icon><span>Temps total</span><strong>{{ recipeForm.get('prepTime')?.value }} minutes</strong></li>
+          <li><mat-icon>signal_cellular_alt</mat-icon><span>Difficulté</span><strong>{{ recipeForm.get('difficulty')?.value }}</strong></li>
+          <li><mat-icon>category</mat-icon><span>Catégorie</span><strong>{{ recipeForm.get('category')?.value }}</strong></li>
+        </ul>
 
-            <mat-form-field appearance="fill">
-              <mat-label>Unité</mat-label>
-              <mat-select formControlName="unit">
-                <mat-option value="g">g</mat-option>
-                <mat-option value="kg">kg</mat-option>
-                <mat-option value="ml">ml</mat-option>
-                <mat-option value="l">l</mat-option>
-                <mat-option value="pièce">pièce</mat-option>
-                <mat-option value="cuillère">cuillère</mat-option>
-                <mat-option value="tasse">tasse</mat-option>
-                <mat-option value="pincée">pincée</mat-option>
-                <mat-option value="autre">autre</mat-option>
-              </mat-select>
-            </mat-form-field>
+        <section class="recipe-section">
+          <div class="view-section-heading"><span>01</span><div><h3>Ingrédients</h3><p>Tout ce qu’il vous faut pour préparer la recette.</p></div></div>
+          <ul class="view-ingredient-list">
+            <li *ngFor="let ingredient of ingredients.controls; let i = index">
+              <div class="view-ingredient-image" *ngIf="ingredientImages[i]"><img [src]="ingredientImages[i]" alt="" /></div>
+              <span class="view-list-index">{{ i + 1 }}</span>
+              <span class="view-ingredient-name">{{ ingredient.get('name')?.value }}</span>
+              <strong>{{ ingredient.get('quantity')?.value || '' }} {{ ingredient.get('unit')?.value || '' }}</strong>
+            </li>
+          </ul>
+        </section>
+
+        <section class="recipe-section">
+          <div class="view-section-heading"><span>02</span><div><h3>Préparation</h3><p>Suivez les étapes dans l’ordre.</p></div></div>
+          <ol class="view-step-list">
+            <li *ngFor="let step of steps.controls; let i = index"><span>{{ i + 1 }}</span><p>{{ step.value }}</p></li>
+          </ol>
+        </section>
+
+        <app-comment-page [recipeId]="currentId?.toString() || 'recipe'"></app-comment-page>
+      </div>
+    </article>
+  </section>
+
+  <form *ngIf="!isViewMode()" [formGroup]="recipeForm" (ngSubmit)="onSubmit()" class="editor-layout">
+    <div class="editor-main">
+      <section class="editor-card identity-card">
+        <div class="section-heading">
+          <span class="section-number">01</span>
+          <div>
+            <h2>L’identité de la recette</h2>
+            <p>Donnez envie dès le premier regard.</p>
           </div>
-          <button mat-icon-button color="warn" type="button" (click)="removeIngredient(i)">
-            <mat-icon>delete</mat-icon>
-          </button>
         </div>
-        <button mat-button color="primary" type="button" (click)="addIngredient()">
-          <mat-icon>add</mat-icon> Ajouter un ingrédient
-        </button>
-      </ng-template>
-    </div>
 
-    <!-- Étapes -->
-    <div formArrayName="steps" class="section">
-      <h3>Étapes</h3>
-      <ol *ngIf="isViewMode(); else stepsForm">
-        <li *ngFor="let step of steps.controls; let i = index">
-          {{ step.value }}
-        </li>
-      </ol>
+        <div class="image-field">
+        <label class="image-uploader" [class.has-image]="recipeImage">
+          <img *ngIf="recipeImage" [src]="recipeImage" alt="Aperçu de la recette" />
+          <span class="image-overlay" *ngIf="!isViewMode()">
+            <mat-icon>{{ recipeImage ? 'photo_camera' : 'add_photo_alternate' }}</mat-icon>
+            <strong>{{ recipeImage ? 'Changer la photo' : 'Ajouter une photo' }}</strong>
+            <small>JPG, PNG ou WEBP</small>
+          </span>
+          <span class="image-placeholder" *ngIf="!recipeImage && isViewMode()">
+            <mat-icon>restaurant_menu</mat-icon>
+            Aucune photo
+          </span>
+          <input *ngIf="!isViewMode()" type="file" accept="image/jpeg,image/png,image/webp" (change)="onImageSelected($event)" />
+        </label>
+        <button *ngIf="recipeImage && !isViewMode()" mat-stroked-button type="button" class="remove-image" (click)="removeRecipeImage()"><mat-icon>delete_outline</mat-icon> Retirer la photo</button>
+        <p class="file-error" *ngIf="fileError"><mat-icon>error_outline</mat-icon>{{ fileError }}</p>
+        </div>
 
-      <ng-template #stepsForm>
-        <div *ngFor="let step of steps.controls; let i = index" class="step-item">
-          <mat-form-field appearance="fill">
-            <mat-label>Étape {{ i + 1 }}</mat-label>
-            <textarea matInput [formControlName]="i"></textarea>
+        <div class="field-grid">
+          <mat-form-field appearance="outline" class="title-field">
+            <mat-label>Nom de la recette</mat-label>
+            <input matInput formControlName="title" placeholder="Ex. Risotto crémeux aux champignons" />
+            <mat-icon matSuffix>edit</mat-icon>
+            <mat-error *ngIf="recipeForm.get('title')?.hasError('required')">Le titre est obligatoire.</mat-error>
+            <mat-error *ngIf="recipeForm.get('title')?.hasError('minlength')">Saisissez au moins 5 caractères.</mat-error>
           </mat-form-field>
-          <button mat-icon-button color="warn" type="button" (click)="removeStep(i)">
-            <mat-icon>delete</mat-icon>
+
+          <mat-form-field appearance="outline" class="description-field">
+            <mat-label>Description</mat-label>
+            <textarea matInput rows="4" formControlName="description" placeholder="Décrivez les saveurs, l’occasion ou l’histoire de cette recette..."></textarea>
+            <mat-error>Ajoutez une description d’au moins 5 caractères.</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Nombre de personnes</mat-label>
+            <mat-icon matPrefix>groups</mat-icon>
+            <input matInput type="number" min="1" formControlName="servings" />
+            <mat-error>Indiquez au moins une personne.</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Temps total</mat-label>
+            <mat-icon matPrefix>schedule</mat-icon>
+            <input matInput type="number" min="1" max="1440" formControlName="prepTime" />
+            <span matTextSuffix>min</span>
+            <mat-error>Indiquez un temps entre 1 et 1440 minutes.</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Difficulté</mat-label>
+            <mat-icon matPrefix>signal_cellular_alt</mat-icon>
+            <mat-select formControlName="difficulty"><mat-option value="facile">Facile</mat-option><mat-option value="intermédiaire">Intermédiaire</mat-option><mat-option value="avancé">Avancé</mat-option></mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Catégorie</mat-label>
+            <mat-icon matPrefix>category</mat-icon>
+            <mat-select formControlName="category">
+              <mat-option value="entrée">Entrée</mat-option>
+              <mat-option value="plat">Plat</mat-option>
+              <mat-option value="dessert">Dessert</mat-option>
+            </mat-select>
+            <mat-error>Choisissez une catégorie.</mat-error>
+          </mat-form-field>
+        </div>
+      </section>
+
+      <section class="editor-card" formArrayName="ingredients">
+        <div class="section-heading heading-with-action">
+          <div class="heading-copy">
+            <span class="section-number">02</span>
+            <div>
+              <h2>Les ingrédients</h2>
+              <p>Ajoutez les quantités dans l’ordre de préparation.</p>
+            </div>
+          </div>
+          <button *ngIf="!isViewMode()" mat-flat-button type="button" class="add-button" (click)="addIngredient()">
+            <mat-icon>add</mat-icon> Ajouter
           </button>
         </div>
-        <button mat-button color="primary" type="button" (click)="addStep()">
-          <mat-icon>add</mat-icon> Ajouter une étape
-        </button>
-      </ng-template>
+
+        <div class="ingredient-list">
+          <article *ngFor="let ingredient of ingredients.controls; let i = index; trackBy: trackByIndex" [formGroupName]="i" class="ingredient-row">
+            <span class="item-index">{{ i + 1 | number:'2.0-0' }}</span>
+
+            <label class="ingredient-photo" [class.has-image]="ingredientImages[i]">
+              <img *ngIf="ingredientImages[i]" [src]="ingredientImages[i]" alt="Aperçu de l’ingrédient" />
+              <mat-icon *ngIf="!ingredientImages[i]">add_a_photo</mat-icon>
+              <input *ngIf="!isViewMode()" type="file" accept="image/*" (change)="onIngredientImageSelected($event, i)" />
+            </label>
+
+            <div class="ingredient-fields">
+              <mat-form-field appearance="outline" class="ingredient-name">
+                <mat-label>Ingrédient</mat-label>
+                <input matInput formControlName="name" placeholder="Champignons" />
+                <mat-error>Le nom est obligatoire.</mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Quantité</mat-label>
+                <input matInput type="number" min="0" formControlName="quantity" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Unité</mat-label>
+                <mat-select formControlName="unit">
+                  <mat-option value="g">g</mat-option><mat-option value="kg">kg</mat-option>
+                  <mat-option value="ml">ml</mat-option><mat-option value="l">l</mat-option>
+                  <mat-option value="pièce">pièce</mat-option><mat-option value="cuillère">cuillère</mat-option>
+                  <mat-option value="tasse">tasse</mat-option><mat-option value="pincée">pincée</mat-option>
+                  <mat-option value="autre">autre</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <button *ngIf="!isViewMode()" mat-icon-button type="button" class="delete-button" aria-label="Supprimer cet ingrédient" [disabled]="ingredients.length === 1" (click)="removeIngredient(i)">
+              <mat-icon>delete_outline</mat-icon>
+            </button>
+          </article>
+        </div>
+      </section>
+
+      <section class="editor-card" formArrayName="steps">
+        <div class="section-heading heading-with-action">
+          <div class="heading-copy">
+            <span class="section-number">03</span>
+            <div>
+              <h2>La préparation</h2>
+              <p>Découpez la recette en étapes simples et précises.</p>
+            </div>
+          </div>
+          <button *ngIf="!isViewMode()" mat-flat-button type="button" class="add-button" (click)="addStep()">
+            <mat-icon>add</mat-icon> Ajouter
+          </button>
+        </div>
+
+        <div class="steps-list">
+          <article *ngFor="let step of steps.controls; let i = index; trackBy: trackByIndex" class="step-row">
+            <span class="step-badge">{{ i + 1 }}</span>
+            <mat-form-field appearance="outline">
+              <mat-label>Étape {{ i + 1 }}</mat-label>
+              <textarea matInput rows="3" [formControlName]="i" placeholder="Décrivez cette étape..."></textarea>
+            </mat-form-field>
+            <button *ngIf="!isViewMode()" mat-icon-button type="button" class="delete-button" aria-label="Supprimer cette étape" [disabled]="steps.length === 1" (click)="removeStep(i)">
+              <mat-icon>delete_outline</mat-icon>
+            </button>
+          </article>
+        </div>
+      </section>
     </div>
 
-    <!-- Boutons d'action -->
-    <div class="action-buttons">
-      <button *ngIf="!isViewMode()" mat-raised-button color="accent" type="submit">
-        Enregistrer
-      </button>
-    </div>
+    <aside class="editor-sidebar">
+      <section class="summary-card">
+        <span class="summary-label">Aperçu</span>
+        <div class="summary-image">
+          <img *ngIf="recipeImage" [src]="recipeImage" alt="Aperçu" />
+          <mat-icon *ngIf="!recipeImage">restaurant</mat-icon>
+        </div>
+        <h3>{{ recipeForm.get('title')?.value || 'Votre future recette' }}</h3>
+        <p>{{ recipeForm.get('description')?.value || 'Votre description apparaîtra ici.' }}</p>
+        <div class="summary-meta">
+          <span><mat-icon>groups</mat-icon>{{ recipeForm.get('servings')?.value || 1 }} pers.</span>
+          <span><mat-icon>schedule</mat-icon>{{ recipeForm.get('prepTime')?.value || 30 }} min</span>
+          <span><mat-icon>signal_cellular_alt</mat-icon>{{ recipeForm.get('difficulty')?.value || 'Facile' }}</span>
+          <span><mat-icon>category</mat-icon>{{ recipeForm.get('category')?.value || 'Catégorie' }}</span>
+        </div>
+        <div class="completion">
+          <div><span>Progression</span><strong>{{ completionPercentage }}%</strong></div>
+          <div class="progress-track"><span [style.width.%]="completionPercentage"></span></div>
+        </div>
+      </section>
+
+      <div class="validation-note" *ngIf="recipeForm.invalid && recipeForm.touched"><mat-icon>info</mat-icon><span>Quelques informations obligatoires restent à compléter.</span></div>
+      <div class="action-panel">
+        <a mat-button routerLink="/home">Annuler</a>
+        <button *ngIf="!isViewMode()" mat-flat-button type="submit" class="save-button">
+          <mat-icon>check</mat-icon>
+          {{ isEditMode() ? 'Enregistrer les modifications' : 'Publier la recette' }}
+        </button>
+      </div>
+    </aside>
   </form>
-</section>
+</main>
 
 <app-footer></app-footer>

@@ -1,21 +1,32 @@
-<mat-toolbar class="header-toolbar" color="primary">
-  <a class="app-title" routerLink="/home" aria-label="Accueil Instachef">
-    Instachef
-  </a>
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" routerLink="/home" aria-label="Accueil Instachef">
+      <span class="brand-mark"><mat-icon>restaurant</mat-icon></span>
+      <span class="brand-name">Insta<span>chef</span></span>
+    </a>
 
-  <div class="spacer"></div>
+    <nav class="main-nav" aria-label="Navigation principale">
+      <a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <mat-icon>menu_book</mat-icon><span>Recettes</span>
+      </a>
+      <a routerLink="/meal-planner" routerLinkActive="active">
+        <mat-icon>calendar_month</mat-icon><span>Planning</span>
+      </a>
+      <a routerLink="/liked-recipe" routerLinkActive="active">
+        <mat-icon>favorite_border</mat-icon><span>Favoris</span>
+      </a>
+      <a routerLink="/profile" routerLinkActive="active">
+        <mat-icon>person_outline</mat-icon><span>Profil</span>
+      </a>
+    </nav>
 
-  <div class="desktop-menu">
-    <a mat-button routerLink="/profile">Profil</a>
-    <a mat-button routerLink="/meal-planner">Planificateur</a>
-    <a mat-button routerLink="/liked-recipe">Recettes aimées</a>
-    <button
-      mat-icon-button
-      matTooltip="Se déconnecter"
-      aria-label="Se déconnecter"
-      (click)="logout()"
-    >
-      <mat-icon>logout</mat-icon>
-    </button>
+    <div class="header-actions">
+      <a class="create-link" routerLink="/create-recipe">
+        <mat-icon>add</mat-icon><span>Nouvelle recette</span>
+      </a>
+      <button class="logout-button" mat-icon-button matTooltip="Se déconnecter" aria-label="Se déconnecter" (click)="logout()">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </div>
   </div>
-</mat-toolbar>
+</header>

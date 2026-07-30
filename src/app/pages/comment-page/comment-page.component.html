@@ -1,23 +1,34 @@
-<div class="comment-section">
-  <h2>Commentaires</h2>
+<section class="comment-section">
+  <header class="comment-header">
+    <div class="comment-title">
+      <span class="comment-icon"><mat-icon>forum</mat-icon></span>
+      <div><h2>Commentaires</h2><p>Partagez votre avis ou une astuce sur cette recette.</p></div>
+    </div>
+    <span class="comment-count">{{ comments.length }}</span>
+  </header>
 
-  <mat-card *ngFor="let comment of comments; let i = index" class="comment-card">
-    <mat-card-content>
-      {{ comment.content }}
-    </mat-card-content>
-    <mat-card-subtitle>
-      {{ comment.date }}
-      <button mat-icon-button color="warn" (click)="deleteComment(i)">
-        <mat-icon>delete</mat-icon>
-      </button>
-    </mat-card-subtitle>
-  </mat-card>
-
-  <form (ngSubmit)="postComment()">
-    <mat-form-field appearance="fill" class="comment-field">
-      <mat-label>Ajouter un commentaire</mat-label>
-      <textarea matInput [(ngModel)]="newComment" name="commentText" required></textarea>
+  <form (ngSubmit)="postComment()" class="comment-form">
+    <div class="comment-avatar"><mat-icon>person</mat-icon></div>
+    <mat-form-field appearance="outline" class="comment-field">
+      <mat-label>Votre commentaire</mat-label>
+      <textarea matInput [(ngModel)]="newComment" name="commentText" rows="4" maxlength="500" required placeholder="Qu’avez-vous pensé de cette recette ?"></textarea>
+      <mat-hint align="end">{{ newComment.length }}/500</mat-hint>
     </mat-form-field>
-    <button mat-raised-button color="primary" type="submit">Envoyer</button>
+    <button mat-flat-button color="primary" type="submit" [disabled]="!newComment.trim()"><mat-icon>send</mat-icon><span>Publier</span></button>
   </form>
-</div>
+
+  <div class="comment-list" *ngIf="comments.length; else noComments">
+    <article *ngFor="let comment of comments; let i = index" class="comment-card">
+      <div class="comment-avatar"><mat-icon>person</mat-icon></div>
+      <div class="comment-content">
+        <div class="comment-meta"><strong>Utilisateur</strong><time>{{ comment.date }}</time></div>
+        <p>{{ comment.content }}</p>
+      </div>
+      <button mat-icon-button (click)="deleteComment(i)" aria-label="Supprimer le commentaire"><mat-icon>delete_outline</mat-icon></button>
+    </article>
+  </div>
+
+  <ng-template #noComments>
+    <div class="no-comments"><mat-icon>chat_bubble_outline</mat-icon><div><strong>Aucun commentaire</strong><p>Soyez la première personne à partager son avis.</p></div></div>
+  </ng-template>
+</section>

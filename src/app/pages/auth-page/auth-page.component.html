@@ -1,81 +1,45 @@
-<div class="auth-container">
-  <mat-card class="auth-card">
-    <mat-card-title>
-      {{ isRegisterMode() ? 'Créer un compte' : 'Connexion' }}
-    </mat-card-title>
+<main class="auth-layout">
+  <section class="auth-story">
+    <a class="auth-brand"><span><mat-icon>restaurant</mat-icon></span> Insta<em>chef</em></a>
+    <div class="story-copy">
+      <span class="eyebrow">Cuisinez. Gardez. Partagez.</span>
+      <h1>Votre cuisine,<br><em>bien organisée.</em></h1>
+      <p>Rassemblez toutes vos recettes, composez vos menus et ne perdez plus jamais une bonne idée.</p>
+      <div class="features">
+        <div class="feature-row"><mat-icon>menu_book</mat-icon><span><strong>Un carnet personnel</strong><small>pour toutes vos créations.</small></span></div>
+        <div class="feature-row"><mat-icon>calendar_month</mat-icon><span><strong>Des repas planifiés</strong><small>en quelques instants.</small></span></div>
+        <div class="feature-row"><mat-icon>favorite_border</mat-icon><span><strong>Vos coups de cœur</strong><small>toujours à portée de main.</small></span></div>
+      </div>
+    </div>
+    <p class="auth-quote">“La cuisine est le cœur de la maison.”</p>
+  </section>
 
-    <div *ngIf="successMessage" class="message success">{{ successMessage }}</div>
-    <div *ngIf="errorMessage" class="message error">{{ errorMessage }}</div>
+  <section class="auth-panel">
+    <mat-card class="auth-card">
+      <header class="card-header">
+        <span class="eyebrow">Bienvenue</span>
+        <mat-card-title>{{ isRegisterMode() ? 'Créer votre compte' : 'Heureux de vous revoir' }}</mat-card-title>
+        <p class="intro">{{ isRegisterMode() ? 'Commencez votre carnet de recettes personnel.' : 'Connectez-vous pour retrouver votre univers culinaire.' }}</p>
+      </header>
+      <div *ngIf="successMessage" class="message success"><mat-icon>check_circle</mat-icon>{{ successMessage }}</div>
+      <div *ngIf="errorMessage" class="message error"><mat-icon>error_outline</mat-icon>{{ errorMessage }}</div>
 
-    <form *ngIf="!isRegisterMode()" [formGroup]="loginForm" (ngSubmit)="onLogin()">
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Email</mat-label>
-        <input matInput formControlName="email" required />
-      </mat-form-field>
+      <form *ngIf="!isRegisterMode()" [formGroup]="loginForm" (ngSubmit)="onLogin()">
+        <mat-form-field appearance="outline"><mat-label>Adresse e-mail</mat-label><mat-icon matPrefix>mail_outline</mat-icon><input matInput type="email" formControlName="email" autocomplete="email" required /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Mot de passe</mat-label><mat-icon matPrefix>lock_outline</mat-icon><input matInput [type]="hideLoginPassword ? 'password' : 'text'" formControlName="password" autocomplete="current-password" required /><button mat-icon-button matSuffix type="button" (click)="hideLoginPassword = !hideLoginPassword"><mat-icon>{{ hideLoginPassword ? 'visibility_off' : 'visibility' }}</mat-icon></button></mat-form-field>
+        <div class="form-options"><mat-checkbox formControlName="remember">Se souvenir de moi</mat-checkbox></div>
+        <button class="submit-button" mat-raised-button color="primary" type="submit" [disabled]="loginForm.invalid || isSubmitting()">Se connecter <mat-icon>arrow_forward</mat-icon></button>
+      </form>
 
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Mot de passe</mat-label>
-        <input matInput [type]="hideLoginPassword ? 'password' : 'text'" formControlName="password" required />
-        <button mat-icon-button matSuffix type="button" (click)="hideLoginPassword = !hideLoginPassword">
-          <mat-icon>{{ hideLoginPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
-        </button>
-      </mat-form-field>
-
-      <mat-checkbox formControlName="remember">Se souvenir de moi</mat-checkbox>
-
-      <button mat-raised-button color="primary" type="submit" [disabled]="loginForm.invalid">
-        Se connecter
-      </button>
-    </form>
-
-    <form *ngIf="isRegisterMode()" [formGroup]="registerForm" (ngSubmit)="onRegister()">
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Prénom</mat-label>
-        <input matInput formControlName="firstname" required />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Nom</mat-label>
-        <input matInput formControlName="lastname" required />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Email</mat-label>
-        <input matInput formControlName="email" required />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Mot de passe</mat-label>
-        <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" required />
-        <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword">
-          <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
-        </button>
-      </mat-form-field>
-
-      <mat-progress-bar [value]="passwordStrength() * 25" color="warn"></mat-progress-bar>
-
-      <ul class="password-conditions">
-        <li [class.valid]="password().length >= 8">8 caractères</li>
-        <li [class.valid]="(password().match(uppercaseRegex)?.length || 0) >= 2">2 majuscules</li>
-        <li [class.valid]="(password().match(digitRegex)?.length || 0) >= 5">5 chiffres</li>
-        <li [class.valid]="(password().match(specialCharRegex)?.length || 0) >= 1">1 caractère spécial</li>
-      </ul>
-
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Confirmer mot de passe</mat-label>
-        <input matInput [type]="hideConfirmPassword ? 'password' : 'text'" formControlName="confirmPassword" required />
-        <button mat-icon-button matSuffix type="button" (click)="hideConfirmPassword = !hideConfirmPassword">
-          <mat-icon>{{ hideConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
-        </button>
-      </mat-form-field>
-
-      <button mat-raised-button color="primary" type="submit" [disabled]="registerForm.invalid">
-        S'inscrire
-      </button>
-    </form>
-
-    <button mat-button color="warn" (click)="toggleMode()">
-      {{ isRegisterMode() ? 'Déjà un compte ? Se connecter' : 'Pas encore de compte ? S’inscrire' }}
-    </button>
-  </mat-card>
-</div>
+      <form *ngIf="isRegisterMode()" [formGroup]="registerForm" (ngSubmit)="onRegister()">
+        <div class="name-row"><mat-form-field appearance="outline"><mat-label>Prénom</mat-label><input matInput formControlName="firstname" autocomplete="given-name" required /></mat-form-field><mat-form-field appearance="outline"><mat-label>Nom</mat-label><input matInput formControlName="lastname" autocomplete="family-name" required /></mat-form-field></div>
+        <mat-form-field appearance="outline"><mat-label>Adresse e-mail</mat-label><mat-icon matPrefix>mail_outline</mat-icon><input matInput type="email" formControlName="email" autocomplete="email" required /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Mot de passe</mat-label><mat-icon matPrefix>lock_outline</mat-icon><input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" autocomplete="new-password" required /><button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword"><mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon></button></mat-form-field>
+        <div class="password-meter"><mat-progress-bar [value]="passwordStrength() * 25"></mat-progress-bar><ul class="password-conditions"><li [class.valid]="password().length >= 8">8 caractères</li><li [class.valid]="(password().match(uppercaseRegex)?.length || 0) >= 1">1 majuscule</li><li [class.valid]="(password().match(digitRegex)?.length || 0) >= 1">1 chiffre</li><li [class.valid]="(password().match(specialCharRegex)?.length || 0) >= 1">1 caractère spécial</li></ul></div>
+        <mat-form-field appearance="outline"><mat-label>Confirmer le mot de passe</mat-label><mat-icon matPrefix>verified_user</mat-icon><input matInput [type]="hideConfirmPassword ? 'password' : 'text'" formControlName="confirmPassword" autocomplete="new-password" required /></mat-form-field>
+        <button class="submit-button" mat-raised-button color="primary" type="submit" [disabled]="registerForm.invalid || isSubmitting()">Créer mon compte <mat-icon>arrow_forward</mat-icon></button>
+      </form>
+      <div class="switch-mode"><span>{{ isRegisterMode() ? 'Vous avez déjà un compte ?' : 'Nouveau sur Instachef ?' }}</span><button mat-button type="button" (click)="toggleMode()">{{ isRegisterMode() ? 'Se connecter' : 'Créer un compte' }}</button></div>
+    </mat-card>
+  </section>
+</main>

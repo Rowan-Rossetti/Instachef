@@ -1,5 +1,5 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, Input, OnInit, inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -23,6 +23,8 @@ import { MatIconModule } from '@angular/material/icon';
   styleUrls: ['./comment-page.component.scss']
 })
 export class CommentPageComponent implements OnInit {
+  private readonly platformId = inject(PLATFORM_ID);
+  private get isBrowser(): boolean { return isPlatformBrowser(this.platformId); }
   @Input() recipeId!: string;
 
   comments: { content: string; date: string }[] = [];
@@ -33,11 +35,13 @@ export class CommentPageComponent implements OnInit {
   }
 
   loadComments(): void {
+    if (!this.isBrowser) return;
     const stored = localStorage.getItem(`comments_${this.recipeId}`);
     this.comments = stored ? JSON.parse(stored) : [];
   }
 
   saveComments(): void {
+    if (!this.isBrowser) return;
     localStorage.setItem(`comments_${this.recipeId}`, JSON.stringify(this.comments));
   }
 

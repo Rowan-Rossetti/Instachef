@@ -1,95 +1,87 @@
 <app-header></app-header>
 
-<section class="home-content">
+<main class="home-content page-shell">
+  <section class="hero">
+    <div class="hero-copy">
+      <span class="eyebrow">Votre carnet de cuisine</span>
+      <h1>Les bonnes recettes méritent d’être <em>partagées.</em></h1>
+      <p>Créez votre collection, retrouvez vos plats préférés et planifiez simplement les repas de la semaine.</p>
+      <div class="hero-actions">
+        <button mat-raised-button color="primary" (click)="addRecipe()"><mat-icon>add</mat-icon> Ajouter une recette</button>
+        <a routerLink="/meal-planner" class="secondary-action"><mat-icon>calendar_month</mat-icon> Organiser mes repas</a>
+      </div>
+    </div>
+    <aside class="hero-summary" aria-label="Résumé du carnet">
+      <div class="summary-visual"><mat-icon>ramen_dining</mat-icon></div>
+      <div class="summary-grid">
+        <div><strong>{{ recipes.length }}</strong><span>recette{{ recipes.length > 1 ? 's' : '' }}</span></div>
+        <div><strong>{{ filteredRecipes().length }}</strong><span>affichée{{ filteredRecipes().length > 1 ? 's' : '' }}</span></div>
+      </div>
+    </aside>
+  </section>
 
-  <div class="filters">
-    <mat-form-field appearance="outline" class="search-field">
-      <mat-label>Rechercher une recette</mat-label>
-      <input
-        matInput
-        [(ngModel)]="searchQuery"
-        placeholder="Ex : lasagne, curry, cheesecake..."
-      />
-      <button mat-icon-button matSuffix *ngIf="searchQuery" (click)="searchQuery=''">
-        <mat-icon>close</mat-icon>
-      </button>
-    </mat-form-field>
+  <section class="catalogue">
+    <div class="section-heading">
+      <div><span class="eyebrow">Votre collection</span><h2>Toutes les recettes</h2></div>
+      <span class="result-count">{{ filteredRecipes().length }} résultat{{ filteredRecipes().length > 1 ? 's' : '' }}</span>
+    </div>
 
-    <mat-form-field appearance="outline" class="category-select">
-      <mat-label>Catégorie</mat-label>
-      <mat-select [(ngModel)]="selectedCategory">
-        <mat-option value="">Toutes</mat-option>
-        <mat-option value="entrée">Entrée</mat-option>
-        <mat-option value="plat">Plat</mat-option>
-        <mat-option value="dessert">Dessert</mat-option>
-      </mat-select>
-    </mat-form-field>
-  </div>
+    <div class="filter-panel">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Rechercher une recette</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [(ngModel)]="searchQuery" placeholder="Lasagne, curry, cheesecake…" />
+        <button mat-icon-button matSuffix *ngIf="searchQuery" (click)="searchQuery=''" aria-label="Effacer"><mat-icon>close</mat-icon></button>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="category-select">
+        <mat-label>Catégorie</mat-label>
+        <mat-select [(ngModel)]="selectedCategory">
+          <mat-option value="">Toutes les catégories</mat-option>
+          <mat-option value="entrée">Entrées</mat-option>
+          <mat-option value="plat">Plats</mat-option>
+          <mat-option value="dessert">Desserts</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
 
-  <div class="add-button">
-    <button mat-raised-button color="primary" (click)="addRecipe()">
-      <mat-icon>add</mat-icon> Ajouter une recette
-    </button>
-  </div>
+    <div *ngIf="filteredRecipes().length === 0" class="no-results">
+      <div class="empty-icon"><mat-icon>menu_book</mat-icon></div>
+      <div>
+        <h3>{{ recipes.length ? 'Aucune recette trouvée' : 'Votre carnet est encore vide' }}</h3>
+        <p>{{ recipes.length ? 'Essayez une autre recherche ou une autre catégorie.' : 'Ajoutez votre première recette et commencez à construire votre collection.' }}</p>
+      </div>
+      <button mat-raised-button color="primary" (click)="addRecipe()"><mat-icon>add</mat-icon> Créer une recette</button>
+    </div>
 
-  <div *ngIf="filteredRecipes().length === 0" class="no-results">
-    <p>Aucune recette ne correspond à votre recherche.</p>
-  </div>
-
-  <div class="recipe-grid" *ngIf="filteredRecipes().length > 0">
-    <mat-card
-      *ngFor="let recipe of filteredRecipes(); trackBy: trackByRecipeId"
-      class="recipe-card"
-    >
-      <mat-card-header>
-        <mat-card-title>{{ recipe.title }}</mat-card-title>
-        <mat-card-subtitle>{{ recipe.category }}</mat-card-subtitle>
-      </mat-card-header>
-
-      <img
-        mat-card-image
-        [src]="recipe.image || 'assets/default.jpg'"
-        alt="Image de la recette"
-      />
-
-      <mat-card-content>
-        <p class="description">{{ recipe.description }}</p>
-        <p><strong>Pour {{ recipe.servings }} personne{{ recipe.servings > 1 ? 's' : '' }}</strong></p>
-      </mat-card-content>
-
-      <mat-card-actions>
-        <button mat-icon-button (click)="viewRecipe(recipe.id)" matTooltip="Voir la recette">
-          <mat-icon>visibility</mat-icon>
-        </button>
-        <button mat-icon-button (click)="editRecipe(recipe.id)" matTooltip="Modifier">
-          <mat-icon>edit</mat-icon>
-        </button>
-        <button mat-icon-button color="warn" (click)="deleteRecipe(recipe.id)" matTooltip="Supprimer">
-          <mat-icon>delete</mat-icon>
-        </button>
-        <button
-  mat-icon-button
-  color="accent"
-  [class.liked]="isLiked(recipe.id)"
-  (click)="toggleLike(recipe.id)"
-  matTooltip="J’aime"
->
-  <mat-icon>{{ isLiked(recipe.id) ? 'favorite' : 'favorite_border' }}</mat-icon>
-</button>
-<span class="likes-count">{{ isLiked(recipe.id) ? 1 : 0 }}</span>
-      </mat-card-actions>
-
-      <button mat-button (click)="toggleComments(recipe.id)">
-        {{ showCommentForId.has(recipe.id) ? 'Masquer les commentaires' : 'Afficher les commentaires' }}
-      </button>
-
-      <app-comment-page
-        *ngIf="showCommentForId.has(recipe.id)"
-        [recipeId]="recipe.id.toString()"
-      ></app-comment-page>
-
-    </mat-card>
-  </div>
-</section>
-
+    <div class="recipe-grid" *ngIf="filteredRecipes().length > 0">
+      <article *ngFor="let recipe of filteredRecipes(); trackBy: trackByRecipeId" class="recipe-card">
+        <div class="image-wrap">
+          <img [src]="recipe.image || 'assets/default.jpg'" [alt]="recipe.title" />
+          <span class="category-badge">{{ recipe.category || 'Recette' }}</span>
+          <button class="favorite" mat-icon-button [class.liked]="isLiked(recipe.id)" (click)="toggleLike(recipe.id)" matTooltip="Ajouter aux favoris">
+            <mat-icon>{{ isLiked(recipe.id) ? 'favorite' : 'favorite_border' }}</mat-icon>
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="card-copy">
+            <h3>{{ recipe.title }}</h3>
+            <p>{{ recipe.description || 'Une recette à découvrir dans votre carnet.' }}</p>
+            <div class="recipe-meta"><span><mat-icon>group</mat-icon>{{ recipe.servings }} pers.</span></div>
+          </div>
+          <div class="card-actions">
+            <button mat-flat-button color="primary" (click)="viewRecipe(recipe.id)">Voir la recette</button>
+            <div class="icon-actions">
+              <button mat-icon-button (click)="editRecipe(recipe.id)" matTooltip="Modifier"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button (click)="deleteRecipe(recipe.id)" matTooltip="Supprimer"><mat-icon>delete_outline</mat-icon></button>
+            </div>
+          </div>
+          <button class="comments-toggle" mat-button (click)="toggleComments(recipe.id)">
+            <mat-icon>chat_bubble_outline</mat-icon>{{ showCommentForId.has(recipe.id) ? 'Masquer les commentaires' : 'Commentaires' }}
+          </button>
+          <app-comment-page *ngIf="showCommentForId.has(recipe.id)" [recipeId]="recipe.id.toString()"></app-comment-page>
+        </div>
+      </article>
+    </div>
+  </section>
+</main>
 <app-footer></app-footer>

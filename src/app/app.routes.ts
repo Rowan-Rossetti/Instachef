@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 
+import { authGuard, guestGuard } from './app.routes.guard';
 import { AuthPageComponent } from './pages/auth-page/auth-page.component';
 import { HomePageComponent } from './pages/home-page/home-page.component';
 import { ProfilePageComponent } from './pages/profile-page/profile-page.component';
@@ -9,13 +10,13 @@ import { LikedRecipesComponent } from './pages/liked-recipes/liked-recipes.compo
 import { CommentPageComponent } from './pages/comment-page/comment-page.component';
 
 export const routes: Routes = [
-  { path: '', component: AuthPageComponent },
-  { path: 'home', component: HomePageComponent },
-  { path: 'auth', component: AuthPageComponent },
-  { path: 'profile', component: ProfilePageComponent },
-  { path: 'create-recipe', component: CreateRecipePageComponent },
-  { path: 'meal-planner', component: MealPlannerComponent },
-  { path: 'liked-recipe', component: LikedRecipesComponent },
-  { path: 'comments', component: CommentPageComponent },
-  { path: '**', redirectTo: '' }
+  { path: '', pathMatch: 'full', redirectTo: 'auth' },
+  { path: 'auth', component: AuthPageComponent, canActivate: [guestGuard] },
+  { path: 'home', component: HomePageComponent, canActivate: [authGuard] },
+  { path: 'profile', component: ProfilePageComponent, canActivate: [authGuard] },
+  { path: 'create-recipe', component: CreateRecipePageComponent, canActivate: [authGuard] },
+  { path: 'meal-planner', component: MealPlannerComponent, canActivate: [authGuard] },
+  { path: 'liked-recipe', component: LikedRecipesComponent, canActivate: [authGuard] },
+  { path: 'comments', component: CommentPageComponent, canActivate: [authGuard] },
+  { path: '**', redirectTo: 'auth' }
 ];

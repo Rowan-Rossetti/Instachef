@@ -1,124 +1,105 @@
-import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-
-/* Angular Material */
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
+import { Component, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { Router } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-auth-page',
   standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatIconModule,
-    MatCardModule,
-    MatCheckboxModule,
-    MatProgressBarModule
-  ],
+  imports: [CommonModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, MatCardModule, MatCheckboxModule, MatProgressBarModule],
   templateUrl: './auth-page.component.html',
   styleUrls: ['./auth-page.component.scss']
 })
 export class AuthPageComponent {
+  private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
 
-  loginForm: FormGroup;
-  registerForm: FormGroup;
-
+  readonly isRegister = signal(false);
+  readonly isSubmitting = signal(false);
   hidePassword = true;
   hideConfirmPassword = true;
   hideLoginPassword = true;
-
-  isRegister = signal(false);
-
   successMessage = '';
   errorMessage = '';
 
-  uppercaseRegex = /[A-Z]/g;
-  digitRegex = /[0-9]/g;
-  specialCharRegex = /[!@#$%^&*(),.?":{}|<>]/g;
+  readonly uppercaseRegex = /[A-Z]/g;
+  readonly digitRegex = /[0-9]/g;
+  readonly specialCharRegex = /[!@#$%^&*(),.?":{}|<>]/;
 
-  constructor(private fb: FormBuilder, private router: Router) {
+  readonly loginForm = this.fb.nonNullable.group({
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', Validators.required],
+    remember: [false]
+  });
 
-    this.loginForm = this.fb.group({
-      email: ['', Validators.required],
-      password: ['', Validators.required],
-      remember: [false]
-    });
+  readonly registerForm = this.fb.nonNullable.group({
+    firstname: ['', [Validators.required, Validators.minLength(2)]],
+    lastname: ['', [Validators.required, Validators.minLength(2)]],
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(8)]],
+    confirmPassword: ['', Validators.required]
+  });
 
-    this.registerForm = this.fb.group({
-      firstname: ['', Validators.required],
-      lastname: ['', Validators.required],
-      email: ['', Validators.required],
-      password: ['', Validators.required],
-      confirmPassword: ['', Validators.required]
-    });
-  }
+  isRegisterMode(): boolean { return this.isRegister(); }
 
-  isRegisterMode() {
-    return this.isRegister();
-  }
-
-  toggleMode() {
-    this.isRegister.set(!this.isRegister());
+  toggleMode(): void {
+    this.isRegister.update(value => !value);
     this.successMessage = '';
     this.errorMessage = '';
   }
 
-  password() {
-    return this.registerForm.get('password')?.value || '';
-  }
+  password(): string { return this.registerForm.controls.password.value; }
 
   passwordStrength(): number {
-    let strength = 0;
-    if (this.password().length >= 8) strength++;
-    if ((this.password().match(this.uppercaseRegex)?.length || 0) >= 2) strength++;
-    if ((this.password().match(this.digitRegex)?.length || 0) >= 5) strength++;
-    if ((this.password().match(this.specialCharRegex)?.length || 0) >= 1) strength++;
-    return strength;
+    const password = this.password();
+    return [password.length >= 8, /[A-Z]/.test(password), /\d/.test(password), this.specialCharRegex.test(password)].filter(Boolean).length;
   }
 
-  onRegister(): void {
-    if (this.registerForm.invalid) return;
-
-    if (this.registerForm.value.password !== this.registerForm.value.confirmPassword) {
-      this.errorMessage = "Les mots de passe ne correspondent pas.";
+  async onRegister(): Promise<void> {
+    if (this.registerForm.invalid || this.isSubmitting()) {
+      this.registerForm.markAllAsTouched();
       return;
     }
-
-    const user = {
-      firstname: this.registerForm.value.firstname,
-      lastname: this.registerForm.value.lastname,
-      email: this.registerForm.value.email,
-      password: this.registerForm.value.password
-    };
-
-    localStorage.setItem('currentUser', JSON.stringify(user));
-
-    this.router.navigate(['/home']);
+    const value = this.registerForm.getRawValue();
+    if (value.password !== value.confirmPassword) {
+      this.errorMessage = 'Les mots de passe ne correspondent pas.';
+      return;
+    }
+    this.isSubmitting.set(true);
+    this.errorMessage = '';
+    try {
+      await this.auth.register(value);
+      await this.router.navigate(['/home']);
+    } catch {
+      this.errorMessage = "La création du compte a échoué. Vérifiez que le stockage du navigateur est autorisé.";
+    } finally {
+      this.isSubmitting.set(false);
+    }
   }
 
-  onLogin(): void {
-    if (this.loginForm.invalid) return;
-
-    const storedUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-
-    if (
-      storedUser.email === this.loginForm.value.email &&
-      storedUser.password === this.loginForm.value.password
-    ) {
-      this.router.navigate(['/home']);
-    } else {
-      this.errorMessage = "Email ou mot de passe incorrect.";
+  async onLogin(): Promise<void> {
+    if (this.loginForm.invalid || this.isSubmitting()) {
+      this.loginForm.markAllAsTouched();
+      return;
+    }
+    this.isSubmitting.set(true);
+    this.errorMessage = '';
+    const value = this.loginForm.getRawValue();
+    try {
+      const valid = await this.auth.login(value.email, value.password, value.remember);
+      if (valid) await this.router.navigate(['/home']);
+      else this.errorMessage = 'Adresse e-mail ou mot de passe incorrect.';
+    } finally {
+      this.isSubmitting.set(false);
     }
   }
 }

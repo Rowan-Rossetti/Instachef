@@ -1,34 +1,26 @@
-import { Component } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatToolbarModule } from '@angular/material/toolbar';
+import { Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { Router, RouterModule } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-header',
   standalone: true,
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.scss'],
-  imports: [
-    CommonModule,
-    RouterModule,
-    MatSidenavModule,
-    MatToolbarModule,
-    MatButtonModule,
-    MatIconModule,
-    MatTooltipModule
-  ]
+  imports: [CommonModule, RouterModule, MatButtonModule, MatIconModule, MatTooltipModule]
 })
 export class HeaderComponent {
+  private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
   menuOpened = false;
-
-  constructor(private router: Router) {}
+  readonly user = this.auth.currentUser();
 
   logout(): void {
-    localStorage.removeItem('currentUser');
-    this.router.navigate(['/auth']);
+    this.auth.logout();
+    void this.router.navigate(['/auth']);
   }
 }

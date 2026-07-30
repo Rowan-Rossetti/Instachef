@@ -1,9 +1,22 @@
-git add .
-git commit -m "Merge remote branch into local main"
-git push -u origin main
 # Instachef
-<<<<<<< HEAD
-Projet angular Rowan Rossetti
-=======
-Projet angular - Rowan Rossetti
->>>>>>> 7e9b33f294dd6e2a180b9231873a8a62c867f409
+
+Carnet de recettes Angular : création et modification de recettes, favoris, commentaires, profil et planification des repas.
+
+## Installation
+
+```bash
+npm install
+npm start
+```
+
+L’application est ensuite disponible sur `http://localhost:4200`.
+
+## Commandes
+
+```bash
+npm run build
+npm run lint
+npm run check
+```
+
+Consultez `REFONTE.md` pour le détail de la refonte et les limites de l’authentification locale.
