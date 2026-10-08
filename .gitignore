@@ -8,3 +8,10 @@ node_modules/
 .angular/ 
 dist/ 
 .vscode/ 
+
+# macOS
+.DS_Store
+
+# Angular
+.angular/cache/
+node_modules/
