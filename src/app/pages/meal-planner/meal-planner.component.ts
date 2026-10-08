@@ -1,5 +1,5 @@
-import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Component, inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Component, inject, OnInit, PLATFORM_ID, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -29,7 +29,8 @@ const STORAGE_PREFIX = 'mealPlanner:';
   templateUrl: './meal-planner.component.html',
   styleUrls: ['./meal-planner.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule, HeaderComponent, FooterComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FormsModule, MatButtonModule, MatIconModule, HeaderComponent, FooterComponent],
 })
 export class MealPlannerComponent implements OnInit {
   private readonly platformId = inject(PLATFORM_ID);

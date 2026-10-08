@@ -58,83 +58,91 @@
       <span>Soir</span>
     </div>
 
-    <article class="day-card" *ngFor="let day of days; let dayIndex = index">
-      <header class="day-card__header">
-        <div class="day-number">{{ (dayIndex + 1).toString().padStart(2, '0') }}</div>
-        <div>
-          <span>Jour</span>
-          <h2>{{ day }}</h2>
-        </div>
-        <div class="day-actions no-export" *ngIf="dayIndex < days.length - 1">
-          <button
-            mat-icon-button
-            type="button"
-            (click)="duplicateDay(day)"
-            [attr.aria-label]="'Copier ' + day + ' vers ' + days[dayIndex + 1]"
-            title="Copier vers le jour suivant"
-          >
-            <mat-icon>content_copy</mat-icon>
-          </button>
-        </div>
-      </header>
-
-      <section class="meal-card" *ngFor="let time of times">
-        <header class="meal-card__title">
-          <mat-icon>{{ time === 'Midi' ? 'light_mode' : 'dark_mode' }}</mat-icon>
-          <span>{{ time }}</span>
+    @for (day of days; track day; let dayIndex = $index) {
+      <article class="day-card">
+        <header class="day-card__header">
+          <div class="day-number">{{ (dayIndex + 1).toString().padStart(2, '0') }}</div>
+          <div>
+            <span>Jour</span>
+            <h2>{{ day }}</h2>
+          </div>
+          @if (dayIndex < days.length - 1) {
+            <div class="day-actions no-export">
+              <button
+                mat-icon-button
+                type="button"
+                (click)="duplicateDay(day)"
+                [attr.aria-label]="'Copier ' + day + ' vers ' + days[dayIndex + 1]"
+                title="Copier vers le jour suivant"
+                >
+                <mat-icon>content_copy</mat-icon>
+              </button>
+            </div>
+          }
         </header>
-
-        <div class="meal-fields">
-          <label class="meal-field">
-            <span>Entrée</span>
-            <input
-              type="text"
-              [(ngModel)]="meals[day][time].entree"
-              (ngModelChange)="saveMeals()"
-              [attr.list]="'entrees-' + dayIndex + '-' + time"
-              placeholder="Ajouter une entrée"
-              autocomplete="off"
-            >
-            <datalist [id]="'entrees-' + dayIndex + '-' + time">
-              <option *ngFor="let recipe of recipesByCategory('entrée')" [value]="recipe.title"></option>
-            </datalist>
-            <strong class="print-value">{{ meals[day][time].entree || '—' }}</strong>
-          </label>
-
-          <label class="meal-field meal-field--main">
-            <span>Plat</span>
-            <input
-              type="text"
-              [(ngModel)]="meals[day][time].plat"
-              (ngModelChange)="saveMeals()"
-              [attr.list]="'plats-' + dayIndex + '-' + time"
-              placeholder="Ajouter un plat"
-              autocomplete="off"
-            >
-            <datalist [id]="'plats-' + dayIndex + '-' + time">
-              <option *ngFor="let recipe of recipesByCategory('plat')" [value]="recipe.title"></option>
-            </datalist>
-            <strong class="print-value">{{ meals[day][time].plat || '—' }}</strong>
-          </label>
-
-          <label class="meal-field">
-            <span>Dessert</span>
-            <input
-              type="text"
-              [(ngModel)]="meals[day][time].dessert"
-              (ngModelChange)="saveMeals()"
-              [attr.list]="'desserts-' + dayIndex + '-' + time"
-              placeholder="Ajouter un dessert"
-              autocomplete="off"
-            >
-            <datalist [id]="'desserts-' + dayIndex + '-' + time">
-              <option *ngFor="let recipe of recipesByCategory('dessert')" [value]="recipe.title"></option>
-            </datalist>
-            <strong class="print-value">{{ meals[day][time].dessert || '—' }}</strong>
-          </label>
-        </div>
-      </section>
-    </article>
+        @for (time of times; track time) {
+          <section class="meal-card">
+            <header class="meal-card__title">
+              <mat-icon>{{ time === 'Midi' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+              <span>{{ time }}</span>
+            </header>
+            <div class="meal-fields">
+              <label class="meal-field">
+                <span>Entrée</span>
+                <input
+                  type="text"
+                  [(ngModel)]="meals[day][time].entree"
+                  (ngModelChange)="saveMeals()"
+                  [attr.list]="'entrees-' + dayIndex + '-' + time"
+                  placeholder="Ajouter une entrée"
+                  autocomplete="off"
+                  >
+                <datalist [id]="'entrees-' + dayIndex + '-' + time">
+                  @for (recipe of recipesByCategory('entrée'); track recipe) {
+                    <option [value]="recipe.title"></option>
+                  }
+                </datalist>
+                <strong class="print-value">{{ meals[day][time].entree || '—' }}</strong>
+              </label>
+              <label class="meal-field meal-field--main">
+                <span>Plat</span>
+                <input
+                  type="text"
+                  [(ngModel)]="meals[day][time].plat"
+                  (ngModelChange)="saveMeals()"
+                  [attr.list]="'plats-' + dayIndex + '-' + time"
+                  placeholder="Ajouter un plat"
+                  autocomplete="off"
+                  >
+                <datalist [id]="'plats-' + dayIndex + '-' + time">
+                  @for (recipe of recipesByCategory('plat'); track recipe) {
+                    <option [value]="recipe.title"></option>
+                  }
+                </datalist>
+                <strong class="print-value">{{ meals[day][time].plat || '—' }}</strong>
+              </label>
+              <label class="meal-field">
+                <span>Dessert</span>
+                <input
+                  type="text"
+                  [(ngModel)]="meals[day][time].dessert"
+                  (ngModelChange)="saveMeals()"
+                  [attr.list]="'desserts-' + dayIndex + '-' + time"
+                  placeholder="Ajouter un dessert"
+                  autocomplete="off"
+                  >
+                <datalist [id]="'desserts-' + dayIndex + '-' + time">
+                  @for (recipe of recipesByCategory('dessert'); track recipe) {
+                    <option [value]="recipe.title"></option>
+                  }
+                </datalist>
+                <strong class="print-value">{{ meals[day][time].dessert || '—' }}</strong>
+              </label>
+            </div>
+          </section>
+        }
+      </article>
+    }
   </section>
 </main>
 

@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -14,8 +14,9 @@ import { AuthService } from '../../core/services/auth.service';
 @Component({
   selector: 'app-auth-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, MatCardModule, MatCheckboxModule, MatProgressBarModule],
+  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, MatCardModule, MatCheckboxModule, MatProgressBarModule],
   templateUrl: './auth-page.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./auth-page.component.scss']
 })
 export class AuthPageComponent {

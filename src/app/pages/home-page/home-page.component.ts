@@ -1,5 +1,5 @@
-import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Component, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Component, inject, PLATFORM_ID, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 
@@ -34,11 +34,8 @@ const LS_LIKES_KEY   = 'likedRecipes';
   selector: 'app-home-page',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     RouterModule,
-
-    // Material
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
@@ -46,12 +43,12 @@ const LS_LIKES_KEY   = 'likedRecipes';
     MatIconModule,
     MatCardModule,
     MatTooltipModule,
-
     HeaderComponent,
     FooterComponent,
-    CommentPageComponent,
-  ],
+    CommentPageComponent
+],
   templateUrl: './home-page.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './home-page.component.scss'
 })
 export class HomePageComponent {

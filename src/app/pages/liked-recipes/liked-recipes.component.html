@@ -10,33 +10,41 @@
     <div class="favorite-count"><mat-icon>favorite</mat-icon><strong>{{ recipes().length }}</strong><span>favori{{ recipes().length > 1 ? 's' : '' }}</span></div>
   </section>
 
-  <section class="recipes-list" *ngIf="recipes().length > 0; else noLiked">
-    <article class="recipe-card" *ngFor="let recipe of recipes(); trackBy: trackById" tabindex="0" role="link" (click)="viewRecipe(recipe.id)" (keydown.enter)="viewRecipe(recipe.id)">
-      <div class="image-wrap">
-        <img *ngIf="recipe.image; else imageFallback" [src]="recipe.image" [alt]="recipe.title || 'Image de la recette'" />
-        <ng-template #imageFallback><div class="image-fallback"><mat-icon>restaurant_menu</mat-icon></div></ng-template>
-        <span class="category">{{ recipe.category || 'Recette' }}</span>
-      </div>
-      <div class="recipe-content">
-        <div class="recipe-copy">
-          <h2>{{ recipe.title || 'Titre non défini' }}</h2>
-          <p>{{ recipe.description || 'Une recette enregistrée dans vos favoris.' }}</p>
-        </div>
-        <div class="recipe-footer">
-          <span *ngIf="recipe.servings"><mat-icon>group</mat-icon>{{ recipe.servings }} pers.</span>
-          <button mat-stroked-button color="warn" (click)="removeLike(recipe.id, $event)"><mat-icon>heart_broken</mat-icon> Retirer</button>
-        </div>
-      </div>
-    </article>
-  </section>
-
-  <ng-template #noLiked>
+  @if (recipes().length > 0) {
+    <section class="recipes-list">
+      @for (recipe of recipes(); track trackById($index, recipe)) {
+        <article class="recipe-card" tabindex="0" role="link" (click)="viewRecipe(recipe.id)" (keydown.enter)="viewRecipe(recipe.id)">
+          <div class="image-wrap">
+            @if (recipe.image) {
+              <img [src]="recipe.image" [alt]="recipe.title || 'Image de la recette'" />
+            } @else {
+              <div class="image-fallback"><mat-icon>restaurant_menu</mat-icon></div>
+            }
+            <span class="category">{{ recipe.category || 'Recette' }}</span>
+          </div>
+          <div class="recipe-content">
+            <div class="recipe-copy">
+              <h2>{{ recipe.title || 'Titre non défini' }}</h2>
+              <p>{{ recipe.description || 'Une recette enregistrée dans vos favoris.' }}</p>
+            </div>
+            <div class="recipe-footer">
+              @if (recipe.servings) {
+                <span><mat-icon>group</mat-icon>{{ recipe.servings }} pers.</span>
+              }
+              <button mat-stroked-button color="warn" (click)="removeLike(recipe.id, $event)"><mat-icon>heart_broken</mat-icon> Retirer</button>
+            </div>
+          </div>
+        </article>
+      }
+    </section>
+  } @else {
     <section class="empty-state">
       <div class="empty-icon"><mat-icon>favorite_border</mat-icon></div>
       <div><h2>Aucun favori pour le moment</h2><p>Ajoutez un cœur aux recettes que vous souhaitez retrouver facilement.</p></div>
       <a mat-flat-button color="primary" routerLink="/home"><mat-icon>menu_book</mat-icon> Découvrir les recettes</a>
     </section>
-  </ng-template>
+  }
+
 </main>
 
 <app-footer></app-footer>

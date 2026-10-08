@@ -17,18 +17,21 @@
     <button mat-flat-button color="primary" type="submit" [disabled]="!newComment.trim()"><mat-icon>send</mat-icon><span>Publier</span></button>
   </form>
 
-  <div class="comment-list" *ngIf="comments.length; else noComments">
-    <article *ngFor="let comment of comments; let i = index" class="comment-card">
-      <div class="comment-avatar"><mat-icon>person</mat-icon></div>
-      <div class="comment-content">
-        <div class="comment-meta"><strong>Utilisateur</strong><time>{{ comment.date }}</time></div>
-        <p>{{ comment.content }}</p>
-      </div>
-      <button mat-icon-button (click)="deleteComment(i)" aria-label="Supprimer le commentaire"><mat-icon>delete_outline</mat-icon></button>
-    </article>
-  </div>
-
-  <ng-template #noComments>
+  @if (comments.length) {
+    <div class="comment-list">
+      @for (comment of comments; track comment; let i = $index) {
+        <article class="comment-card">
+          <div class="comment-avatar"><mat-icon>person</mat-icon></div>
+          <div class="comment-content">
+            <div class="comment-meta"><strong>Utilisateur</strong><time>{{ comment.date }}</time></div>
+            <p>{{ comment.content }}</p>
+          </div>
+          <button mat-icon-button (click)="deleteComment(i)" aria-label="Supprimer le commentaire"><mat-icon>delete_outline</mat-icon></button>
+        </article>
+      }
+    </div>
+  } @else {
     <div class="no-comments"><mat-icon>chat_bubble_outline</mat-icon><div><strong>Aucun commentaire</strong><p>Soyez la première personne à partager son avis.</p></div></div>
-  </ng-template>
+  }
+
 </section>

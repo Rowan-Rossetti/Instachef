@@ -1,5 +1,5 @@
-import { Component, inject, signal, PLATFORM_ID } from '@angular/core';
-import { isPlatformBrowser, CommonModule } from '@angular/common';
+import { Component, inject, signal, PLATFORM_ID, ChangeDetectionStrategy } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -14,8 +14,9 @@ const LS_OLD_LIKES   = 'likedRecipeIds';   // fallback pour anciennes données
 @Component({
   selector: 'app-liked-recipes',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatCardModule, MatButtonModule, MatIconModule, HeaderComponent, FooterComponent],
+  imports: [RouterModule, MatCardModule, MatButtonModule, MatIconModule, HeaderComponent, FooterComponent],
   templateUrl: './liked-recipes.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./liked-recipes.component.scss']
 })
 export class LikedRecipesComponent {

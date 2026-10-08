@@ -1,5 +1,5 @@
 import { isPlatformBrowser, CommonModule } from '@angular/common';
-import { Component, PLATFORM_ID, inject, signal } from '@angular/core';
+import { Component, PLATFORM_ID, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
@@ -44,6 +44,7 @@ const LS_RECIPES_KEY = 'recipes';
   standalone: true,
   templateUrl: './create-recipe-page.component.html',
   styleUrl: './create-recipe-page.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     CommonModule,
     ReactiveFormsModule,

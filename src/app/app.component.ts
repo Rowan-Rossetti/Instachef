@@ -1,5 +1,5 @@
-import { DOCUMENT, isPlatformBrowser } from '@angular/common';
-import { Component, inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Component, inject, OnInit, PLATFORM_ID, DOCUMENT, ChangeDetectionStrategy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { BrowserStorageService } from './core/services/browser-storage.service';
 
@@ -7,6 +7,7 @@ import { BrowserStorageService } from './core/services/browser-storage.service';
   selector: 'app-root',
   standalone: true,
   imports: [RouterOutlet],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: '<router-outlet></router-outlet>'
 })
 export class AppComponent implements OnInit {

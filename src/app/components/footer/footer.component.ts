@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
+
 import { RouterModule } from '@angular/router';
 
 @Component({
@@ -7,7 +7,8 @@ import { RouterModule } from '@angular/router';
   standalone: true,
   templateUrl: './footer.component.html',
   styleUrls: ['./footer.component.scss'],
-  imports: [CommonModule, RouterModule]
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [RouterModule]
 })
 export class FooterComponent {
 }
