@@ -7,16 +7,6 @@ import { Router, RouterModule } from '@angular/router';
 import { HeaderComponent } from '../../components/header/header.component';
 import { FooterComponent } from '../../components/footer/footer.component';
 
-interface LikedRecipe {
-  id: number;
-  title?: string;
-  name?: string;
-  image?: string;
-  description?: string;
-  servings?: number;
-  [key: string]: unknown;
-}
-
 const LS_RECIPES_KEY = 'recipes';
 const LS_LIKES_KEY   = 'likedRecipes';     // même clé que sur HomePage
 const LS_OLD_LIKES   = 'likedRecipeIds';   // fallback pour anciennes données
@@ -32,7 +22,7 @@ const LS_OLD_LIKES   = 'likedRecipeIds';   // fallback pour anciennes données
 export class LikedRecipesComponent {
   private platformId = inject(PLATFORM_ID);
   private router = inject(Router);
-  recipes = signal<LikedRecipe[]>(this.getLikedRecipes()); // recettes filtrées (likées)
+  recipes = signal<any[]>(this.getLikedRecipes()); // recettes filtrées (likées)
 
   private get isBrowser(): boolean {
     return isPlatformBrowser(this.platformId);
@@ -64,14 +54,14 @@ export class LikedRecipesComponent {
   }
 
   // Toutes les recettes (depuis localStorage)
-  private getAllRecipes(): LikedRecipe[] {
+  private getAllRecipes(): any[] {
     if (!this.isBrowser) return [];
     const data = localStorage.getItem(LS_RECIPES_KEY);
     try { return data ? JSON.parse(data) : []; } catch { return []; }
   }
 
   // Recettes likées = recettes dont l'id est dans likedIds
-  private getLikedRecipes(): LikedRecipe[] {
+  private getLikedRecipes(): any[] {
     const likedIds = this.readLikedIds();
     return this.getAllRecipes().filter(r => r && typeof r.id === 'number' && likedIds.has(r.id));
   }
@@ -90,5 +80,5 @@ export class LikedRecipesComponent {
   }
 
   // Utile pour *ngFor trackBy
-  trackById = (_: number, r: LikedRecipe) => r?.id;
+  trackById = (_: number, r: any) => r?.id;
 }

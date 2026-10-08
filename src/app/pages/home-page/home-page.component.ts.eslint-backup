@@ -87,7 +87,7 @@ export class HomePageComponent {
     try {
       localStorage.setItem(key, JSON.stringify(value));
     } catch {
-      // Le stockage peut être indisponible ou saturé.
+      
     }
   }
 

@@ -9,8 +9,8 @@
     "serve:ssr": "node dist/instachef/server/main.js",
     "dev:ssr": "ng run instachef:serve-ssr",
     "test": "ng test",
-    "deploy": "ng build --configuration production --base-href /Instachef/ && echo \"Build termine. Le deploiement est gere par GitHub Actions apres un git push.\"",
-    "deploy:gh": "ng build --configuration production --base-href /Instachef/ && echo \"Build termine. Le deploiement est gere par GitHub Actions apres un git push.\"",
+    "deploy": "ng build --configuration production --base-href \"https://Rowan-Rossetti.github.io/Instachef/\" && npx angular-cli-ghpages --dir=dist/instachef/browser --branch=gh-pages",
+    "deploy:gh": "ng deploy --base-href=/Instachef/",
     "check": "ng build --configuration development && ng lint"
   },
   "private": true,
@@ -22,16 +22,14 @@
     "@angular/build": "^22.2.2",
     "@angular/cli": "^22.2.2",
     "@angular/compiler-cli": "^22.2.2",
-    "@eslint/js": "^10.0.1",
     "@types/angular": "^1.8.9",
     "@types/express": "^5.0.1",
     "@types/file-saver": "^2.0.7",
     "@types/node": "^22.15.17",
-    "angular-eslint": "^22.5.0",
+    "angular-cli-ghpages": "^3.0.2",
     "istanbul-lib-instrument": "^6.0.3",
     "sass": "^1.89.2",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.71.1",
     "vite": "^6.3.6"
   },
   "dependencies": {

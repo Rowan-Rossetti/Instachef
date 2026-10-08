@@ -82,7 +82,7 @@
             </div>
           </div>
           <div class="image-field">
-            <label for="recipe-image-upload" class="image-uploader" [class.has-image]="recipeImage">
+            <label class="image-uploader" [class.has-image]="recipeImage">
               @if (recipeImage) {
                 <img [src]="recipeImage" alt="Aperçu de la recette" />
               }
@@ -176,7 +176,7 @@
             @for (ingredient of ingredients.controls; track trackByIndex(i); let i = $index) {
               <article [formGroupName]="i" class="ingredient-row">
                 <span class="item-index">{{ i + 1 | number:'2.0-0' }}</span>
-                <label [attr.for]="'ingredient-image-' + i" class="ingredient-photo" [class.has-image]="ingredientImages[i]">
+                <label class="ingredient-photo" [class.has-image]="ingredientImages[i]">
                   @if (ingredientImages[i]) {
                     <img [src]="ingredientImages[i]" alt="Aperçu de l’ingrédient" />
                   }
@@ -184,7 +184,7 @@
                     <mat-icon>add_a_photo</mat-icon>
                   }
                   @if (!isViewMode()) {
-                    <input type="file" accept="image/*" (change)="onIngredientImageSelected($event, i)" [id]="'ingredient-image-' + i" />
+                    <input type="file" accept="image/*" (change)="onIngredientImageSelected($event, i)" />
                   }
                 </label>
                 <div class="ingredient-fields">
