@@ -1,5 +1,5 @@
-import { Component, inject, signal, PLATFORM_ID, ChangeDetectionStrategy } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { BrowserStorageService } from '../../core/services/browser-storage.service';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -30,44 +30,22 @@ const LS_OLD_LIKES   = 'likedRecipeIds';   // fallback pour anciennes données
   styleUrls: ['./liked-recipes.component.scss']
 })
 export class LikedRecipesComponent {
-  private platformId = inject(PLATFORM_ID);
+  private readonly storage = inject(BrowserStorageService);
   private router = inject(Router);
   recipes = signal<LikedRecipe[]>(this.getLikedRecipes()); // recettes filtrées (likées)
 
-  private get isBrowser(): boolean {
-    return isPlatformBrowser(this.platformId);
-  }
-
-  // Lit un tableau d'IDs likés depuis localStorage
   private readLikedIds(): Set<number> {
-    if (!this.isBrowser) return new Set<number>();
-
-    // Clé officielle
-    const main = localStorage.getItem(LS_LIKES_KEY);
-    if (main) {
-      try { return new Set<number>(JSON.parse(main)); } catch { /* noop */ }
-    }
-
-    // Fallback si des données plus anciennes existent
-    const legacy = localStorage.getItem(LS_OLD_LIKES);
-    if (legacy) {
-      try { return new Set<number>(JSON.parse(legacy)); } catch { /* noop */ }
-    }
-
-    return new Set<number>();
+    const key = this.storage.has(LS_LIKES_KEY) ? LS_LIKES_KEY : LS_OLD_LIKES;
+    return new Set(this.storage.getArray<number>(key, (id): id is number => typeof id === 'number'));
   }
 
-  // Écrit les IDs likés (clé officielle)
   private writeLikedIds(ids: Set<number>): void {
-    if (!this.isBrowser) return;
-    localStorage.setItem(LS_LIKES_KEY, JSON.stringify([...ids]));
+    this.storage.set(LS_LIKES_KEY, [...ids]);
   }
 
-  // Toutes les recettes (depuis localStorage)
   private getAllRecipes(): LikedRecipe[] {
-    if (!this.isBrowser) return [];
-    const data = localStorage.getItem(LS_RECIPES_KEY);
-    try { return data ? JSON.parse(data) : []; } catch { return []; }
+    return this.storage.getArray<LikedRecipe>(LS_RECIPES_KEY, (recipe): recipe is LikedRecipe =>
+      !!recipe && typeof recipe === 'object' && 'id' in recipe && typeof recipe.id === 'number');
   }
 
   // Recettes likées = recettes dont l'id est dans likedIds

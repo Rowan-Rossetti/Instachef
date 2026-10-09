@@ -1,5 +1,5 @@
-import { Component, Input, OnInit, inject, PLATFORM_ID, ChangeDetectionStrategy } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+import { Component, Input, OnChanges, inject, ChangeDetectionStrategy } from '@angular/core';
+import { BrowserStorageService } from '../../core/services/browser-storage.service';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -22,27 +22,29 @@ import { MatIconModule } from '@angular/material/icon';
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./comment-page.component.scss']
 })
-export class CommentPageComponent implements OnInit {
-  private readonly platformId = inject(PLATFORM_ID);
-  private get isBrowser(): boolean { return isPlatformBrowser(this.platformId); }
+export class CommentPageComponent implements OnChanges {
+  private readonly storage = inject(BrowserStorageService);
   @Input() recipeId!: string;
 
   comments: { content: string; date: string }[] = [];
   newComment = '';
 
-  ngOnInit(): void {
+  ngOnChanges(): void {
+    this.newComment = '';
     this.loadComments();
   }
 
   loadComments(): void {
-    if (!this.isBrowser) return;
-    const stored = localStorage.getItem(`comments_${this.recipeId}`);
-    this.comments = stored ? JSON.parse(stored) : [];
+    this.comments = this.storage.getArray<{ content: string; date: string }>(
+      `comments_${this.recipeId}`,
+      (comment): comment is { content: string; date: string } =>
+        !!comment && typeof comment === 'object' && 'content' in comment &&
+        typeof comment.content === 'string' && 'date' in comment && typeof comment.date === 'string',
+    );
   }
 
   saveComments(): void {
-    if (!this.isBrowser) return;
-    localStorage.setItem(`comments_${this.recipeId}`, JSON.stringify(this.comments));
+    this.storage.set(`comments_${this.recipeId}`, this.comments);
   }
 
   postComment(): void {

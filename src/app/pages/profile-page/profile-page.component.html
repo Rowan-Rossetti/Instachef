@@ -29,10 +29,13 @@
       <header class="form-header compact"><div><span>Sécurité</span><h2>Modifier le mot de passe</h2></div><mat-icon>password</mat-icon></header>
       <mat-form-field appearance="outline" class="wide"><mat-label>Nouveau mot de passe (facultatif)</mat-label><mat-icon matPrefix>lock_outline</mat-icon><input matInput [type]="hideNewPassword ? 'password' : 'text'" formControlName="newPassword" autocomplete="new-password" /><button mat-icon-button matSuffix type="button" (click)="hideNewPassword = !hideNewPassword" [attr.aria-label]="hideNewPassword ? 'Afficher le mot de passe' : 'Masquer le mot de passe'"><mat-icon>{{ hideNewPassword ? 'visibility_off' : 'visibility' }}</mat-icon></button><mat-hint>8 caractères minimum.</mat-hint><mat-error>Le mot de passe doit contenir au moins 8 caractères.</mat-error></mat-form-field>
 
+      @if (error()) {
+        <p role="alert">{{ error() }}</p>
+      }
       @if (saved()) {
         <p class="saved-message"><mat-icon>check_circle</mat-icon> Vos modifications ont été enregistrées.</p>
       }
-      <div class="form-actions"><button mat-stroked-button type="button" (click)="logout()"><mat-icon>logout</mat-icon> Se déconnecter</button><button mat-flat-button color="primary" type="submit"><mat-icon>save</mat-icon> Enregistrer</button></div>
+      <div class="form-actions"><button mat-stroked-button type="button" (click)="logout()"><mat-icon>logout</mat-icon> Se déconnecter</button><button mat-flat-button color="primary" type="submit" [disabled]="saving()"><mat-icon>save</mat-icon> Enregistrer</button></div>
     </form>
   </div>
 </main>

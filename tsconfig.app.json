@@ -11,8 +11,7 @@
     ]
   },
   "files": [
-    "src/main.ts",
-    "src/custom-typings.d.ts"
+    "src/main.ts"
   ],
   "angularCompilerOptions": {
     "extendedDiagnostics": {

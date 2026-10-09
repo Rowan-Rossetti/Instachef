@@ -99,6 +99,8 @@ export class AuthPageComponent {
       const valid = await this.auth.login(value.email, value.password, value.remember);
       if (valid) await this.router.navigate(['/home']);
       else this.errorMessage = 'Adresse e-mail ou mot de passe incorrect.';
+    } catch {
+      this.errorMessage = 'La connexion a échoué. Vérifiez que le stockage du navigateur est autorisé.';
     } finally {
       this.isSubmitting.set(false);
     }
