@@ -1,5 +1,5 @@
 
-import { Component, inject, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, OnInit, signal, DestroyRef, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -23,7 +23,15 @@ export class ProfilePageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
 
+  private readonly destroyRef = inject(DestroyRef);
+  private savedTimer?: ReturnType<typeof setTimeout>;
   readonly saved = signal(false);
+  readonly saving = signal(false);
+  readonly error = signal('');
+
+  constructor() {
+    this.destroyRef.onDestroy(() => clearTimeout(this.savedTimer));
+  }
   hideNewPassword = true;
   readonly profileForm = this.fb.nonNullable.group({
     firstname: ['', [Validators.required, Validators.minLength(2)]],
@@ -38,11 +46,22 @@ export class ProfilePageComponent implements OnInit {
   }
 
   async saveChanges(): Promise<void> {
+    if (this.saving()) return;
     if (this.profileForm.invalid) { this.profileForm.markAllAsTouched(); return; }
-    await this.auth.updateProfile(this.profileForm.getRawValue());
-    this.saved.set(true);
-    this.profileForm.controls.newPassword.reset('');
-    setTimeout(() => this.saved.set(false), 2500);
+    this.saving.set(true);
+    this.saved.set(false);
+    this.error.set('');
+    clearTimeout(this.savedTimer);
+    try {
+      await this.auth.updateProfile(this.profileForm.getRawValue());
+      this.saved.set(true);
+      this.profileForm.controls.newPassword.reset('');
+      this.savedTimer = setTimeout(() => this.saved.set(false), 2500);
+    } catch {
+      this.error.set('Les modifications n’ont pas été enregistrées. Vérifiez le stockage du navigateur.');
+    } finally {
+      this.saving.set(false);
+    }
   }
 
   logout(): void {

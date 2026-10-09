@@ -22,12 +22,15 @@ export class AuthService {
   private readonly storage = inject(BrowserStorageService);
 
   isAuthenticated(): boolean {
-    return this.storage.has(SESSION_KEY, 'session') || this.storage.has(SESSION_KEY, 'local');
+    return this.currentUser() !== null;
   }
 
   currentUser(): SessionUser | null {
-    return this.storage.get<SessionUser | null>(SESSION_KEY, null, 'session')
-      ?? this.storage.get<SessionUser | null>(SESSION_KEY, null, 'local');
+    for (const target of ['session', 'local'] as const) {
+      const user = this.storage.get<SessionUser | null>(SESSION_KEY, null, target);
+      if (user && typeof user.firstname === 'string' && typeof user.lastname === 'string' && typeof user.email === 'string') return user;
+    }
+    return null;
   }
 
   async register(input: { firstname: string; lastname: string; email: string; password: string }): Promise<void> {
@@ -37,7 +40,7 @@ export class AuthService {
       email: input.email.trim().toLowerCase(),
       passwordHash: await this.hash(input.password),
     };
-    this.storage.set(ACCOUNT_KEY, account);
+    if (!this.storage.set(ACCOUNT_KEY, account)) throw new Error('Enregistrement du compte impossible');
     this.startSession(account, true);
     this.removeLegacyAuthKeys();
   }
@@ -60,7 +63,7 @@ export class AuthService {
       email: input.email.trim().toLowerCase(),
       passwordHash: input.newPassword ? await this.hash(input.newPassword) : account.passwordHash,
     };
-    this.storage.set(ACCOUNT_KEY, updated);
+    if (!this.storage.set(ACCOUNT_KEY, updated)) throw new Error('Enregistrement du profil impossible');
     const persistent = this.storage.has(SESSION_KEY, 'local');
     this.startSession(updated, persistent);
   }
@@ -73,12 +76,16 @@ export class AuthService {
 
   private startSession(account: StoredAccount, remember: boolean): void {
     const session: SessionUser = { firstname: account.firstname, lastname: account.lastname, email: account.email };
+    if (!this.storage.set(SESSION_KEY, session, remember ? 'local' : 'session')) {
+      throw new Error('Enregistrement de la session impossible');
+    }
     this.storage.remove(SESSION_KEY, remember ? 'session' : 'local');
-    this.storage.set(SESSION_KEY, session, remember ? 'local' : 'session');
   }
 
   private async hash(value: string): Promise<string> {
-    if (!this.storage.isBrowser || !globalThis.crypto?.subtle) return `fallback:${value}`;
+    if (!this.storage.isBrowser || !globalThis.crypto?.subtle) {
+      throw new Error('La connexion nécessite un navigateur avec HTTPS ou localhost');
+    }
     const bytes = new TextEncoder().encode(value);
     const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
     return Array.from(new Uint8Array(digest)).map(byte => byte.toString(16).padStart(2, '0')).join('');

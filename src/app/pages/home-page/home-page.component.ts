@@ -1,5 +1,4 @@
-import { isPlatformBrowser } from '@angular/common';
-import { Component, inject, PLATFORM_ID, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 
@@ -14,6 +13,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { HeaderComponent } from '../../components/header/header.component';
 import { FooterComponent } from '../../components/footer/footer.component';
+import { BrowserStorageService } from '../../core/services/browser-storage.service';
 import { CommentPageComponent } from '../comment-page/comment-page.component';
 
 type Category = 'entrée' | 'plat' | 'dessert' | '';
@@ -52,7 +52,7 @@ const LS_LIKES_KEY   = 'likedRecipes';
   styleUrl: './home-page.component.scss'
 })
 export class HomePageComponent {
-  private platformId = inject(PLATFORM_ID);
+  private readonly storage = inject(BrowserStorageService);
   private router = inject(Router);
 
   searchQuery = '';
@@ -68,32 +68,11 @@ export class HomePageComponent {
     this.loadLikesFromStorage();
   }
 
-  private get isBrowser(): boolean {
-    return isPlatformBrowser(this.platformId);
-  }
-
-  private readFromStorage<T>(key: string, fallback: T): T {
-    if (!this.isBrowser) return fallback;
-    try {
-      const raw = localStorage.getItem(key);
-      return raw ? (JSON.parse(raw) as T) : fallback;
-    } catch {
-      return fallback;
-    }
-  }
-
-  private writeToStorage<T>(key: string, value: T): void {
-    if (!this.isBrowser) return;
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch {
-      // Le stockage peut être indisponible ou saturé.
-    }
-  }
-
   /* --------------------------------- Recettes ---------------------------------- */
   private loadRecipesFromStorage(): void {
-    this.recipes = this.readFromStorage<Recipe[]>(LS_RECIPES_KEY, []);
+    this.recipes = this.storage.getArray<Recipe>(LS_RECIPES_KEY, (r): r is Recipe =>
+      !!r && typeof r === 'object' && 'id' in r && typeof r.id === 'number' &&
+      'title' in r && typeof r.title === 'string');
     // Sécurité minimale : s’assurer que chaque recette a un id numérique
     this.recipes = this.recipes
       .filter(r => r && typeof r.id === 'number')
@@ -104,17 +83,17 @@ export class HomePageComponent {
   }
 
   private persistRecipes(): void {
-    this.writeToStorage(LS_RECIPES_KEY, this.recipes);
+    this.storage.set(LS_RECIPES_KEY, this.recipes);
   }
 
   /* ---------------------------------- Likes ------------------------------------ */
   private loadLikesFromStorage(): void {
-    const arr = this.readFromStorage<number[]>(LS_LIKES_KEY, []);
+    const arr = this.storage.getArray<number>(LS_LIKES_KEY, (id): id is number => typeof id === 'number');
     this.likedIds = new Set(arr);
   }
 
   private persistLikes(): void {
-    this.writeToStorage(LS_LIKES_KEY, Array.from(this.likedIds));
+    this.storage.set(LS_LIKES_KEY, Array.from(this.likedIds));
   }
 
   isLiked(id: number): boolean {
@@ -176,6 +155,7 @@ export class HomePageComponent {
 
     this.persistRecipes();
     this.persistLikes();
+    this.storage.remove(`comments_${id}`);
   }
 
   toggleComments(id: number): void {

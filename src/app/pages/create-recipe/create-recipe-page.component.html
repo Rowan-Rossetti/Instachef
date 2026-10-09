@@ -277,6 +277,9 @@
         @if (recipeForm.invalid && recipeForm.touched) {
           <div class="validation-note"><mat-icon>info</mat-icon><span>Quelques informations obligatoires restent à compléter.</span></div>
         }
+        @if (feedbackMessage) {
+          <p class="validation-note" role="alert">{{ feedbackMessage }}</p>
+        }
         <div class="action-panel">
           <a mat-button routerLink="/home">Annuler</a>
           @if (!isViewMode()) {

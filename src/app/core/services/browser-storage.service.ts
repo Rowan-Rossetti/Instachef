@@ -15,6 +15,11 @@ export class BrowserStorageService {
     } catch { return fallback; }
   }
 
+  getArray<T>(key: string, validate: (value: unknown) => value is T, storage: 'local' | 'session' = 'local'): T[] {
+    const value = this.get<unknown>(key, [], storage);
+    return Array.isArray(value) ? value.filter(validate) : [];
+  }
+
   set<T>(key: string, value: T, storage: 'local' | 'session' = 'local'): boolean {
     if (!this.isBrowser) return false;
     try { this.pick(storage).setItem(key, JSON.stringify(value)); return true; }
@@ -23,11 +28,14 @@ export class BrowserStorageService {
 
   remove(key: string, storage: 'local' | 'session' = 'local'): void {
     if (!this.isBrowser) return;
-    this.pick(storage).removeItem(key);
+    try { this.pick(storage).removeItem(key); }
+    catch { /* Le navigateur peut refuser l’accès au stockage. */ }
   }
 
   has(key: string, storage: 'local' | 'session' = 'local'): boolean {
-    return this.isBrowser && this.pick(storage).getItem(key) !== null;
+    if (!this.isBrowser) return false;
+    try { return this.pick(storage).getItem(key) !== null; }
+    catch { return false; }
   }
 
   private pick(storage: 'local' | 'session'): Storage {

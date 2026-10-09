@@ -1,3 +1,4 @@
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isPlatformBrowser, CommonModule } from '@angular/common';
 import { Component, PLATFORM_ID, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -94,12 +95,13 @@ export class CreateRecipePageComponent {
   /* --------------------------------- Lifecycle --------------------------------- */
   constructor() {
     // Lire les query params pour déterminer le mode + id
-    this.route.queryParamMap.subscribe((params) => {
-      const mode = (params.get('mode') as 'create' | 'edit' | 'view' | null) ?? 'create';
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const requestedMode = params.get('mode');
+      const mode = requestedMode === 'edit' || requestedMode === 'view' ? requestedMode : 'create';
       const id   = params.get('id');
 
       this.mode.set(mode);
-      this.currentId = id ? Number(id) : null;
+      this.currentId = id && Number.isFinite(Number(id)) ? Number(id) : null;
 
       if (this.isEditMode() || this.isViewMode()) {
         this.loadRecipeForEditOrView(this.currentId);
@@ -171,15 +173,14 @@ export class CreateRecipePageComponent {
   private readRecipes(): RecipeModel[] {
     if (!this.isBrowser) return [];
     try {
-      return this.storage.get<RecipeModel[]>(LS_RECIPES_KEY, []);
+      return this.storage.getArray<RecipeModel>(LS_RECIPES_KEY, (recipe): recipe is RecipeModel =>
+        !!recipe && typeof recipe === 'object' && 'id' in recipe && typeof recipe.id === 'number' &&
+        'title' in recipe && typeof recipe.title === 'string');
     } catch { return []; }
   }
 
-  private writeRecipes(recipes: RecipeModel[]): void {
-    if (!this.isBrowser) return;
-    try {
-      this.storage.set(LS_RECIPES_KEY, recipes);
-    } catch { /* noop */ }
+  private writeRecipes(recipes: RecipeModel[]): boolean {
+    return this.storage.set(LS_RECIPES_KEY, recipes);
   }
 
   /* ---------------------------------- Load ------------------------------------- */
@@ -205,7 +206,7 @@ export class CreateRecipePageComponent {
     // Ingrédients + images
     this.ingredients.clear();
     this.ingredientImages = [];
-    (found.ingredients ?? []).forEach((ing, i) => {
+    (Array.isArray(found.ingredients) ? found.ingredients : []).forEach((ing, i) => {
       this.ingredients.push(this.fb.group({
         name:     [ing?.name ?? '', Validators.required],
         quantity: [typeof ing?.quantity === 'number' ? ing.quantity : null],
@@ -216,7 +217,7 @@ export class CreateRecipePageComponent {
 
     // Étapes
     this.steps.clear();
-    (found.steps ?? []).forEach(step => this.steps.push(new FormControl(step ?? '', { nonNullable: true })));
+    (Array.isArray(found.steps) ? found.steps : []).forEach(step => this.steps.push(new FormControl(step ?? '', { nonNullable: true })));
 
     if (this.ingredients.length === 0) this.addIngredient();
     if (this.steps.length === 0) this.addStep();
@@ -256,7 +257,10 @@ export class CreateRecipePageComponent {
       if (idx >= 0) all[idx] = toSave; else all.push(toSave);
     }
 
-    this.writeRecipes(all);
+    if (!this.writeRecipes(all)) {
+      this.feedbackMessage = 'La recette n’a pas été enregistrée. Le stockage est indisponible ou plein. Essayez avec des images plus petites.';
+      return;
+    }
     this.feedbackMessage = this.isEditMode() ? 'Modifications enregistrées.' : 'Recette publiée.';
 
     // Redirection vers la page d’accueil (ajuste la route au besoin)

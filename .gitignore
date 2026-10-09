@@ -1,17 +1,11 @@
-node_modules
+node_modules/
 .angular/
-node_modules/
 dist/
-
-dist/
-node_modules/ 
-.angular/ 
-dist/ 
-.vscode/ 
-
-# macOS
+out-tsc/
+coverage/
+.vscode/
 .DS_Store
-
-# Angular
-.angular/cache/
-node_modules/
+*.bak
+*.bak[0-9]*
+*.eslint-backup
+*.log
